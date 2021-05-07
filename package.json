@@ -1,0 +1,72 @@
+{
+  "name": "percy-cake-hydration-tools",
+  "version": "1.0.9",
+  "description": "Command line hydration utility scripts for files dehydrated for `Percy - Configuration As Kode Editor`",
+  "repository": "https://gitlab.com/tmo-poc/hydration-tool",
+  "main": "dist/index.js",
+  "types": "dist/types/index.d.js",
+  "bin": {
+    "hydrate": "dist/hydrate.js",
+    "compare-json": "dist/compare-json.js"
+  },
+  "scripts": {
+    "docs": "typedoc --out docs/ --excludePrivate --exclude '**/index.ts' src/lib",
+    "tsc": "tsc",
+    "lint": "eslint ./src ./test --ext .ts",
+    "lint:fix": "eslint ./src ./test --ext .ts --fix",
+    "test": "nyc mocha test/*.test.ts",
+    "compare-json": "ts-node src/compare-json.ts",
+    "hydrate": "ts-node src/hydrate.ts",
+    "compare-json.js": "node dist/compare-json.js",
+    "hydrate.js": "node dist/hydrate.js"
+  },
+  "nyc": {
+    "include": [
+      "src/**/*.ts"
+    ],
+    "require": "./test/init.js",
+    "reporter": [
+      "text",
+      "html"
+    ]
+  },
+  "dependencies": {
+    "config": "^3.3.6",
+    "fs-extra": "^9.1.0",
+    "js-yaml": "^4.1.0",
+    "jsondiffpatch": "^0.4.1",
+    "jsonschema": "^1.4.0",
+    "lodash": "^4.17.21",
+    "minimist": "^1.2.5",
+    "winston": "3.1.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.2.17",
+    "@types/chai-as-promised": "^7.1.3",
+    "@types/config": "0.0.38",
+    "@types/fs-extra": "^8.1.1",
+    "@types/js-yaml": "^4.0.1",
+    "@types/lodash": "^4.14.168",
+    "@types/minimist": "^1.2.1",
+    "@types/mocha": "^8.2.2",
+    "@types/node": "^10.17.59",
+    "@typescript-eslint/eslint-plugin": "^4.22.1",
+    "@typescript-eslint/parser": "^4.22.1",
+    "chai": "^4.3.4",
+    "chai-as-promised": "^7.1.1",
+    "eslint": "^7.25.0",
+    "mocha": "^8.3.2",
+    "nyc": "^15.1.0",
+    "source-map-support": "^0.5.19",
+    "ts-node": "^9.1.1",
+    "typedoc": "^0.20.36",
+    "typescript": "^4.2.4"
+  },
+  "license": "Apache-2.0",
+  "licenses": [
+    {
+      "type": "Apache-2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    }
+  ]
+}
