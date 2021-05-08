@@ -71,6 +71,11 @@ describe("hydrate", () => {
         assert.deepEqual(json, expectedJson);
       }
     });
+    it("Success without output", async () => {
+      const inputFile = path.join(inputFolder, "shop/app.config.yaml");
+      await assert.becomes(hydrate.hydrateFile(inputFile, undefined, undefined, undefined), undefined);
+      assert(!fs.existsSync(outputFolder));
+    });
     it("YAML with anchors and aliases", async () => {
       const inputFile = path.join(inputFolder, "shop/app.config.yaml");
       const outputFile = path.join(outputFolder, "/shop");
@@ -266,6 +271,54 @@ describe("hydrate", () => {
       const envs = ["dev", "local", "prod", "qat"];
       await assert.becomes(utils.findSubFolders(outputFile), envs);
     });
+
+    it("Config with include file", async () => {
+      const inputFile = path.join(
+        __dirname,
+        "data/appWithIncludeProperty/includeFile.config.yaml"
+      );
+      const outputFile = path.join(
+        outputFolder,
+        "/appWithIncludeProperty"
+      );
+      await assert.becomes(
+        hydrate.hydrateFile(inputFile, undefined, undefined, outputFile)
+      , undefined);
+      const envs = ["dev", "local", "prod", "qat"];
+      await assert.becomes(utils.findSubFolders(outputFile), envs);
+    });
+
+    it("Config with include url", async () => {
+      const inputFile = path.join(
+        __dirname,
+        "data/appWithIncludeProperty/includeURL.config.yaml"
+      );
+      const outputFile = path.join(
+        outputFolder,
+        "/appWithIncludeProperty"
+      );
+      await assert.becomes(
+        hydrate.hydrateFile(inputFile, undefined, undefined, outputFile)
+      , undefined);
+      const envs = ["dev", "local", "prod", "qat"];
+      await assert.becomes(utils.findSubFolders(outputFile), envs);
+    });
+
+    it("Config with include array", async () => {
+      const inputFile = path.join(
+        __dirname,
+        "data/appWithIncludeProperty/includeArray.config.yaml"
+      );
+      const outputFile = path.join(
+        outputFolder,
+        "/appWithIncludeProperty"
+      );
+      await assert.becomes(
+        hydrate.hydrateFile(inputFile, undefined, undefined, outputFile)
+      , undefined);
+      const envs = ["dev", "local", "prod", "qat"];
+      await assert.becomes(utils.findSubFolders(outputFile), envs);
+    });
   });
 
   describe("hydrateApp", () => {
@@ -276,6 +329,11 @@ describe("hydrate", () => {
       const inputFile = path.join(inputFolder, "/shop");
       const outputFile = path.join(outputFolder, "/shop");
       await assert.becomes(hydrate.hydrateApp(inputFile, undefined, outputFile), undefined);
+    });
+    it("Success without output", async () => {
+      const inputFile = path.join(inputFolder, "/shop");
+      await assert.becomes(hydrate.hydrateApp(inputFile, undefined, undefined), undefined);
+      assert(!fs.existsSync(outputFolder));
     });
     it("No environments file", async () => {
       const inputFile = path.join(__dirname, "data/appWithoutEnvironments");
@@ -295,6 +353,10 @@ describe("hydrate", () => {
     });
     it("Success", async () => {
       await assert.becomes(hydrate.hydrateAllApps(inputFolder, outputFolder), undefined);
+    });
+    it("Success without output", async () => {
+      await assert.becomes(hydrate.hydrateAllApps(inputFolder, undefined), undefined);
+      assert(!fs.existsSync(outputFolder));
     });
   });
 });

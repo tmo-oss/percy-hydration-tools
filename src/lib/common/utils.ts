@@ -25,6 +25,8 @@ software without specific prior written permission.
  * Utility functions
  */
 import * as fs from "fs-extra";
+import axios from "axios";
+import { URL } from "url";
 import * as yaml from "js-yaml";
 import { Validator } from "jsonschema";
 import * as _ from "lodash";
@@ -101,7 +103,65 @@ export async function loadEnvironmentsFile(
  */
 async function readYAML(filepath: string): Promise<IAppConfig> {
   const file = await fs.readFile(filepath, "utf8");
-  return yaml.load(file) as IAppConfig;
+  const result = yaml.load(file) as IAppConfig
+  await loadInclude(result.default)
+  await loadInclude(result.environments)
+  return result;
+}
+
+/**
+ * Load include data
+ * @param obj the include parent object
+ */
+async function loadInclude(obj: Record<string, unknown>): Promise<Record<string, unknown>> {
+  for (const key in obj) {
+    if (key === "include" && _.isArray(obj[key])) {
+      for (const path of obj[key] as [string]) {
+        const includeRecord = await readIncludeYAML(path);
+        for (const iKey in includeRecord) {
+          _.set(obj, iKey, includeRecord[iKey]);
+        }
+      }
+      delete obj.include
+    } else if (key === "include" && _.isString(obj[key])) {
+      const includeRecord = await readIncludeYAML(obj[key] as string);
+      for (const iKey in includeRecord) {
+        _.set(obj, iKey, includeRecord[iKey]);
+      }
+      delete obj.include
+    } else if (_.isObject(obj[key])) {
+      await loadInclude(obj[key] as Record<string, unknown>);
+    }
+  }
+  return obj;
+}
+
+/**
+ * Read include yaml and parse it
+ * @param path the include path
+ */
+async function readIncludeYAML(path: string): Promise<Record<string, unknown>> {
+  if (isUrl(path)) {
+    const res = await axios.get(path, { responseType: "text" });
+    return yaml.load(res.data) as Record<string, unknown>;
+  } else {
+    const file = await fs.readFile(path, "utf8");
+    return yaml.load(file) as Record<string, unknown>;
+  }
+}
+
+/**
+ * Check if a string is a valid URL
+ * @param path the url
+ * @returns whether the path is url
+ */
+function isUrl(path: string): boolean {
+  try {
+    new URL(path);
+    return true;
+  } catch (err) {
+    return false;
+  }
 }
 
 /**
