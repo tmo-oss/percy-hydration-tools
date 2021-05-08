@@ -174,13 +174,16 @@ export class Hydrate {
       if (!percyConfig) {
         percyConfig = await this.loadPercyConfig(directoryPath, true);
       }
+      const appConfig = await utils.readYAML(yamlFilePath);
       const result = await utils.readAppConfigYAML(
+        appConfig,
         yamlFilePath,
         environments,
         percyConfig
       );
       if (outputFolder) {
         await utils.writeResult(result, yamlFilePath, outputFolder, percyConfig);
+        await utils.writeInheritanceTree(appConfig, result, yamlFilePath, outputFolder, percyConfig);
       }
       this.logger.info(`Successfully processed ${yamlFilePath}`);
     } catch (e) {

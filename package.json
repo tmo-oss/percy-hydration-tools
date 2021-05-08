@@ -39,6 +39,7 @@
     "jsonschema": "^1.4.0",
     "lodash": "^4.17.21",
     "minimist": "^1.2.5",
+    "node-plantuml": "^0.9.0",
     "winston": "3.1.0"
   },
   "devDependencies": {
