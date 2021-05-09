@@ -646,7 +646,7 @@ export async function writeInheritanceTree(
   const pumlArr = ["@startuml"]
   for (const env of environments) {
     const parentEnv = _.get(appConfig.environments[env], "inherits");
-    if (parentEnv && environments[parentEnv]) {
+    if (parentEnv && _.includes(environments, parentEnv)) {
       pumlArr.push(`${parentEnv} <|-- ${env}`)
     } else {
       pumlArr.push(`default <|-- ${env}`)
@@ -663,8 +663,14 @@ export async function writeInheritanceTree(
   pumlArr.push("@enduml")
   const filename = path.basename(yamlFilePath, ".yaml");
   const outputFilepath = path.join(outputFolder, `${filename}.puml.png`);
-  const gen = plantuml.generate( _.join(pumlArr, "\n"), { format: "png" });
-  gen.out.pipe(fs.createWriteStream(outputFilepath));
+  await new Promise((resolve, reject) => {
+    const gen = plantuml.generate( _.join(pumlArr, "\n"), { format: "png" });
+    gen.out.pipe(fs.createWriteStream(outputFilepath));
+    gen.out.on("close", () => resolve(""))
+    gen.out.on("error", (error: Error) => {
+      reject(error)
+    })
+  })
 }
 
 /**
