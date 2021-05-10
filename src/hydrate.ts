@@ -41,14 +41,16 @@ const minimistOptions = {
     c: "colorConsole",
     f: "file",
     o: "out",
-    r: "root"
+    r: "root",
+    l: "linter"
   },
-  boolean: ["root", "app", "file"],
+  boolean: ["root", "app", "file", "linter"],
   default: {
     app: false,
     colorConsole: undefined,
     file: false,
-    root: false
+    root: false,
+    linter: false
   },
   string: ["out", "colorConsole"]
 };
@@ -71,8 +73,8 @@ if (getNumberOfOptionsSet([options.root, options.app, options.file]) !== 1) {
   logger.error("You should choose one of these options --root, --app, --file");
 } else if (!options.path) {
   logger.error("--path is required");
-} else if (!options.out) {
-  logger.error("--out option is required");
+} else if (!options.linter && !options.out) {
+  logger.error("--out or --linter option is required");
 } else {
   main()
     .then(isAllValid => {
@@ -101,7 +103,11 @@ async function main() {
     );
 
     options.path = path.resolve(options.path);
-    options.out = path.resolve(options.out);
+    if (options.linter) {
+      options.out = undefined;
+    } else {
+      options.out = path.resolve(options.out);
+    }
 
     if (options.root) {
       await hydrate.hydrateAllApps(options.path, options.out);

@@ -57,7 +57,7 @@ export class Hydrate {
    */
   public async hydrateAllApps(
     appsRootFolderPath: string,
-    outputFolder: string
+    outputFolder: string | undefined
   ): Promise<void> {
     try {
       const percyConfig = await this.loadPercyConfig(appsRootFolderPath);
@@ -67,7 +67,7 @@ export class Hydrate {
       await Promise.all(
         appFolders.map(async folder => {
           const appFolder = path.join(appsRootFolderPath, folder);
-          const appOutputFolder = path.join(outputFolder, folder);
+          const appOutputFolder = outputFolder ? path.join(outputFolder, folder) : undefined;
           try {
             await this.hydrateApp(appFolder, percyConfig, appOutputFolder);
           } catch (e) {
@@ -99,7 +99,7 @@ export class Hydrate {
   public async hydrateApp(
     appFolderPath: string,
     percyConfig: IPercyConfig | undefined,
-    outputFolder: string
+    outputFolder: string | undefined
   ): Promise<void> {
     try {
       // If percy config is not provided look for it in directory
@@ -160,7 +160,7 @@ export class Hydrate {
     yamlFilePath: string,
     environments: string[] | undefined,
     percyConfig: IPercyConfig | undefined,
-    outputFolder: string
+    outputFolder: string | undefined
   ): Promise<void> {
     try {
       const directoryPath = path.dirname(yamlFilePath);
@@ -174,12 +174,17 @@ export class Hydrate {
       if (!percyConfig) {
         percyConfig = await this.loadPercyConfig(directoryPath, true);
       }
+      const appConfig = await utils.readYAML(yamlFilePath);
       const result = await utils.readAppConfigYAML(
+        appConfig,
         yamlFilePath,
         environments,
         percyConfig
       );
-      await utils.writeResult(result, yamlFilePath, outputFolder, percyConfig);
+      if (outputFolder) {
+        await utils.writeResult(result, yamlFilePath, outputFolder, percyConfig);
+        await utils.writeInheritanceTree(appConfig, result, yamlFilePath, outputFolder, percyConfig);
+      }
       this.logger.info(`Successfully processed ${yamlFilePath}`);
     } catch (e) {
       this.logger.error(`Error occurred while processing ${yamlFilePath}. `, e);

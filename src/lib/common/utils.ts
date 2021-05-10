@@ -25,26 +25,30 @@ software without specific prior written permission.
  * Utility functions
  */
 import * as fs from "fs-extra";
+import axios from "axios";
+import { URL } from "url";
 import * as yaml from "js-yaml";
 import { Validator } from "jsonschema";
 import * as _ from "lodash";
 import * as path from "path";
+import * as plantuml from "node-plantuml";
 import { IAppConfig, IPercyConfig } from "../interfaces";
 import { getLogger } from "./index";
 
 /**
  * Read and validate YAML config file
+ * @param appConfig the app config
  * @param filePath the YAML file path
  * @param environments the environments
  * @param percyConfig the percy config
  */
 export async function readAppConfigYAML(
+  appConfig: IAppConfig,
   filePath: string,
   environments: string[],
   percyConfig: IPercyConfig,
   colorConsole?: boolean
 ): Promise<Record<string, unknown>> {
-  const appConfig = await readYAML(filePath);
   const validatedAppConfig = validateAppConfig(appConfig, filePath);
   let envNodes;
   try {
@@ -99,9 +103,67 @@ export async function loadEnvironmentsFile(
  * Read yaml file and parse it
  * @param filepath filepath
  */
-async function readYAML(filepath: string): Promise<IAppConfig> {
+export async function readYAML(filepath: string): Promise<IAppConfig> {
   const file = await fs.readFile(filepath, "utf8");
-  return yaml.load(file) as IAppConfig;
+  const result = yaml.load(file) as IAppConfig
+  await loadInclude(result.default)
+  await loadInclude(result.environments)
+  return result;
+}
+
+/**
+ * Load include data
+ * @param obj the include parent object
+ */
+async function loadInclude(obj: Record<string, unknown>): Promise<Record<string, unknown>> {
+  for (const key in obj) {
+    if (key === "include" && _.isArray(obj[key])) {
+      for (const path of obj[key] as [string]) {
+        const includeRecord = await readIncludeYAML(path);
+        for (const iKey in includeRecord) {
+          _.set(obj, iKey, includeRecord[iKey]);
+        }
+      }
+      delete obj.include
+    } else if (key === "include" && _.isString(obj[key])) {
+      const includeRecord = await readIncludeYAML(obj[key] as string);
+      for (const iKey in includeRecord) {
+        _.set(obj, iKey, includeRecord[iKey]);
+      }
+      delete obj.include
+    } else if (_.isObject(obj[key])) {
+      await loadInclude(obj[key] as Record<string, unknown>);
+    }
+  }
+  return obj;
+}
+
+/**
+ * Read include yaml and parse it
+ * @param path the include path
+ */
+async function readIncludeYAML(path: string): Promise<Record<string, unknown>> {
+  if (isUrl(path)) {
+    const res = await axios.get(path, { responseType: "text" });
+    return yaml.load(res.data) as Record<string, unknown>;
+  } else {
+    const file = await fs.readFile(path, "utf8");
+    return yaml.load(file) as Record<string, unknown>;
+  }
+}
+
+/**
+ * Check if a string is a valid URL
+ * @param path the url
+ * @returns whether the path is url
+ */
+function isUrl(path: string): boolean {
+  try {
+    new URL(path);
+    return true;
+  } catch (err) {
+    return false;
+  }
 }
 
 /**
@@ -553,6 +615,62 @@ export async function writeResult(
       await fs.writeJSON(outputFilepath, _.get(envNode, env), { spaces: 2 });
     })
   );
+}
+
+/**
+ * Generates a puml class diagram showing the inheritance tree
+ * @param appConfig the app config
+ * @param envNode the resolved environment specific data
+ * @param yamlFilePath file path of the input yaml file
+ * @param outputFolder output folder
+ * @param percyConfig the percy config
+ */
+export async function writeInheritanceTree(
+  appConfig: IAppConfig,
+  envNode: Record<string, unknown>,
+  yamlFilePath: string,
+  outputFolder: string,
+  percyConfig: IPercyConfig
+): Promise<void> {
+  const environments = Object.keys(envNode).filter(
+    (env) => {
+      if (percyConfig.envIgnorePrefix && percyConfig.envIgnoreSuffix) {
+        return !env.startsWith(percyConfig.envIgnorePrefix) || !env.endsWith(percyConfig.envIgnoreSuffix);
+      } else if (percyConfig.envIgnorePrefix) {
+        return !env.startsWith(percyConfig.envIgnorePrefix);
+      } else if (percyConfig.envIgnoreSuffix) {
+        return !env.endsWith(percyConfig.envIgnoreSuffix);
+      }
+      return true;
+    });
+  const pumlArr = ["@startuml"]
+  for (const env of environments) {
+    const parentEnv = _.get(appConfig.environments[env], "inherits");
+    if (parentEnv && _.includes(environments, parentEnv)) {
+      pumlArr.push(`${parentEnv} <|-- ${env}`)
+    } else {
+      pumlArr.push(`default <|-- ${env}`)
+    }
+  }
+  for (const key in appConfig.default) {
+    pumlArr.push(`default : ${key}`)
+  }
+  for (const env of environments) {
+    for (const key in _.get(envNode, env) as Record<string, unknown>) {
+      pumlArr.push(`${env} : ${key}`)
+    }
+  }
+  pumlArr.push("@enduml")
+  const filename = path.basename(yamlFilePath, ".yaml");
+  const outputFilepath = path.join(outputFolder, `${filename}.puml.png`);
+  await new Promise((resolve, reject) => {
+    const gen = plantuml.generate( _.join(pumlArr, "\n"), { format: "png" });
+    gen.out.pipe(fs.createWriteStream(outputFilepath));
+    gen.out.on("close", () => resolve(""))
+    gen.out.on("error", (error: Error) => {
+      reject(error)
+    })
+  })
 }
 
 /**

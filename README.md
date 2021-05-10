@@ -45,13 +45,17 @@ compare-json test/data/.percyrc test/data/modified.percyrc --colorConsole=false
 
 Script for processing YAML configuration files and converting it to environment specific JSON configuration
 
-`hydrate < --root | --app | --file > <path/to/input> --out <path/to/output>`
+`hydrate < --root | --app | --file > <path/to/input> < --linter | --out <path/to/output>>`
 It provides three options
 
 - `--root` `-r` for processing all apps in a root directory
 - `--app` `-a` for processing a single app directory
 - `--file` `-f` for processing a single file
   You should specify one of these three options.
+
+- `--linter` `-l` validate the yaml file but don't generate json file
+- `--out` `-o` generate json file in the directory
+  You should specify one of these two options.
 
 ```bash
 # Examples
@@ -151,7 +155,7 @@ $ npm run compare-json test/data/.percyrc test/data/modified.percyrc -- --out ./
 
 Script for processing YAML configuration files and converting it to environment specific JSON configuration
 
-`npm run hydrate -- < --root | --app | --file > <path/to/input> --out <path/to/output>`
+`npm run hydrate -- < --root | --app | --file > <path/to/input> < --linter | --out <path/to/output>>`
 
 It provides three options
 
@@ -159,6 +163,10 @@ It provides three options
 - `--app` `-a` for processing a single app directory
 - `--file` `-f` for processing a single file
   You should specify one of these three options.
+
+- `--linter` `-l` validate the yaml file but don't generate json file
+- `--out` `-o` generate json file in the directory
+  You should specify one of these two options.
 
 ```bash
 # Examples
