@@ -31,10 +31,10 @@ import * as yaml from "js-yaml";
 import { Validator } from "jsonschema";
 import * as _ from "lodash";
 import * as path from "path";
-// import * as plantuml from "node-plantuml";
 import { IAppConfig, IPercyConfig } from "../interfaces";
 import { getLogger } from "./index";
-const plantuml = require('node-plantuml');
+/* eslint-disable @typescript-eslint/no-var-requires */
+const plantuml = require("node-plantuml");
 
 /**
  * Read and validate YAML config file
