@@ -32,7 +32,7 @@ import { Validator } from "jsonschema";
 import * as _ from "lodash";
 import * as path from "path";
 import { IAppConfig, IPercyConfig } from "../interfaces";
-import { getLogger } from "./index";
+import { ParseError } from "./index";
 /* eslint-disable @typescript-eslint/no-var-requires */
 const plantuml = require("node-plantuml");
 
@@ -47,18 +47,12 @@ export async function readAppConfigYAML(
   appConfig: IAppConfig,
   filePath: string,
   environments: string[],
-  percyConfig: IPercyConfig,
-  colorConsole?: boolean
+  percyConfig: IPercyConfig
 ): Promise<Record<string, unknown>> {
   const validatedAppConfig = validateAppConfig(appConfig, filePath);
-  let envNodes;
-  try {
-    envNodes = mergeEnvNodes(validatedAppConfig, environments);
-  } catch (e) {
-    getLogger(colorConsole).error(`Error in process file: ${filePath}.`, e);
-    throw new Error(`Error in process file: ${filePath}.\nCause: ${e.message}`);
-  }
+  const  envNodes = mergeEnvNodes(validatedAppConfig, environments);
   const result = {};
+  const errors: Error[] = []
   // Resolve variables of each environment
   _.each(envNodes, (envNode, environment) => {
     try {
@@ -68,10 +62,17 @@ export async function readAppConfigYAML(
         resolveVariables(envNode as Record<string, unknown>, environment, percyConfig)
       );
     } catch (e) {
-      getLogger(colorConsole).error(`Cannot resolve variables at (${filePath} env:${environment}).`, e);
-      throw new Error(`Cannot resolve variables at (${filePath} env:${environment}).\nCause: ${e.message}`);
+      if (e instanceof ParseError) {
+        e.appendPrefix(`env.${environment}: `)
+        errors.push(e)
+      } else {
+        errors.push(new Error(`env.${environment}: ${e.message}`))
+      }
     }
   });
+  if (!_.isEmpty(errors)) {
+    throw new ParseError(errors)
+  }
   return result;
 }
 
@@ -82,8 +83,7 @@ export async function readAppConfigYAML(
  */
 export async function loadEnvironmentsFile(
   envFileFolderPath: string,
-  configOptions: Record<string, unknown>,
-  colorConsole?: boolean
+  configOptions: Record<string, unknown>
 ): Promise<string[]> {
   const envFileName: string = configOptions.ENVIRONMENT_FILE_NAME as string;
   const envFilePath = path.join(envFileFolderPath, envFileName);
@@ -94,8 +94,7 @@ export async function loadEnvironmentsFile(
   const appConfig = await readYAML(envFilePath);
   const validatedAppConfig = validateAppConfig(
     appConfig,
-    envFilePath,
-    colorConsole
+    envFilePath
   );
   return Object.keys(validatedAppConfig.environments);
 }
@@ -262,15 +261,23 @@ function substitute(
   tokens: Record<string, string>,
   percyConfig: IPercyConfig
 ): Record<string, unknown> {
+  const errors: Error[] = [];
   _.each(obj, (value, key) => {
-    if (_.isArray(value)) {
-      _.set(obj, key, substituteArray(value, tokens, percyConfig));
-    } else if (_.isObject(value)) {
-      _.set(obj, key, substitute(value as Record<string, unknown>, tokens, percyConfig));
-    } else if (_.isString(value)) {
-      _.set(obj, key, substituteString(value, tokens, percyConfig));
+    try {
+      if (_.isArray(value)) {
+        _.set(obj, key, substituteArray(value, tokens, percyConfig));
+      } else if (_.isObject(value)) {
+        _.set(obj, key, substitute(value as Record<string, unknown>, tokens, percyConfig));
+      } else if (_.isString(value)) {
+        _.set(obj, key, substituteString(value, tokens, percyConfig));
+      }
+    } catch (e) {
+      errors.push(e);
     }
   });
+  if (!_.isEmpty(errors)) {
+    throw new ParseError(errors);
+  }
   return obj;
 }
 
@@ -286,15 +293,23 @@ function substituteArray(
   tokens: Record<string, string>,
   percyConfig: IPercyConfig
 ): (Record<string, unknown>[] | Record<string, unknown> | string)[] {
+  const errors: Error[] = [];
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    if (_.isArray(item)) {
-      items[i] = substituteArray(item, tokens, percyConfig) as Record<string, unknown>[];
-    } else if (_.isObject(item)) {
-      items[i] = substitute(item, tokens, percyConfig);
-    } else if (_.isString(item)) {
-      items[i] = substituteString(item, tokens, percyConfig);
+    try{
+      if (_.isArray(item)) {
+        items[i] = substituteArray(item, tokens, percyConfig) as Record<string, unknown>[];
+      } else if (_.isObject(item)) {
+        items[i] = substitute(item, tokens, percyConfig);
+      } else if (_.isString(item)) {
+        items[i] = substituteString(item, tokens, percyConfig);
+      }
+    } catch (e) {
+      errors.push(e);
     }
+  }
+  if (!_.isEmpty(errors)) {
+    throw new ParseError(errors);
   }
   return items;
 }
@@ -313,6 +328,7 @@ function substituteString(
 ): string {
   let retValue = str;
   const regExp = createRegExp(percyConfig);
+  const errors: Error[] = []
   while (true) {
     const regExpResult = regExp.exec(str);
     if (!regExpResult) {
@@ -324,8 +340,11 @@ function substituteString(
     if (tokenValue) {
       retValue = retValue.replace(fullMatch, tokenValue);
     } else {
-      throw new Error(`Cannot resolve variables for: ${tokenName}`);
+      errors.push(new Error(`Cannot resolve variables for: ${tokenName}`))
     }
+  }
+  if (!_.isEmpty(errors)) {
+    throw new ParseError(errors);
   }
   return retValue;
 }
@@ -399,17 +418,25 @@ function mergeEnvNodes(
   environments: string[]
 ): Record<string, unknown> {
   const mergedEnvNodes: Record<string, unknown> = {};
+  const errors: Error[] = []
   // calculate the env in inherits order
   const sortedEnv = sortEnvByInherits(environments, appConfig.environments);
   // Apply default values to each environment
-  sortedEnv.forEach(e =>
-    _.set(
-      mergedEnvNodes,
-      e,
-      // Merge default values and environment specific values
-      mergeEnvNode(mergedEnvNodes, e, appConfig)
-    )
-  );
+  sortedEnv.forEach(e => {
+    try {
+      _.set(
+        mergedEnvNodes,
+        e,
+        // Merge default values and environment specific values
+        mergeEnvNode(mergedEnvNodes, e, appConfig)
+      )
+    } catch (e) {
+      errors.push(e)
+    }
+  });
+  if (!_.isEmpty(errors)) {
+    throw new ParseError(errors);
+  }
   return mergedEnvNodes;
 }
 
@@ -449,27 +476,35 @@ function mergeProperties(
   env: string,
   propertyName: string
 ) {
+  const errors: Error[] = []
   _.each(src, (value, key) => {
     // ignore inherits key
     if (key !== "inherits") {
       const name = propertyName ? `${propertyName}.${key}` : key;
       if (!_.has(dest, key)) {
-        throw new Error(`Cannot find property: ${name} in env node: ${env}.`);
+        errors.push(new Error(`evn.${env}: Cannot find property ${name} in this node`))
+        return
       }
       const valueInDest = _.get(dest, key);
       if (typeof valueInDest !== typeof value) {
-        throw new Error(
-          `Type is different from default node for property: ${name} in env node: ${env}.`
-        );
+        errors.push(new Error(`evn.${env}: Type is different from default node for property ${name} in this node`))
+        return
       }
 
       if (_.isPlainObject(value) && _.isPlainObject(valueInDest)) {
-        mergeProperties(valueInDest as Record<string, unknown>, value as Record<string, unknown>, env, name);
+        try{
+          mergeProperties(valueInDest as Record<string, unknown>, value as Record<string, unknown>, env, name);
+        } catch (e) {
+          errors.push(e)
+        }
       } else {
         _.set(dest, key, value);
       }
     }
   });
+  if (!_.isEmpty(errors)) {
+    throw new ParseError(errors);
+  }
 }
 
 /**
@@ -537,8 +572,7 @@ function sortEnvByInherits(environments: string[], envNodes: Record<string, unkn
  */
 function validateAppConfig(
   appConfig: IAppConfig,
-  configFilePath?: string,
-  colorConsole?: boolean
+  configFilePath?: string
 ): IAppConfig {
   const schema = {
     id: "/AppConfig",
@@ -556,16 +590,8 @@ function validateAppConfig(
   const v = new Validator();
   const result = v.validate(appConfig, schema);
   if (!result.valid) {
-    result.errors.forEach(e =>
-      getLogger(colorConsole).error(
-        e.message + `${configFilePath ? ` (${configFilePath})` : ""}`
-      )
-    );
-    throw new Error(
-      `Invalid config file format ${
-        configFilePath ? `(${configFilePath})` : ""
-      }`
-    );
+    const errors = _.map(result.errors, e => new Error(`config.${configFilePath}: ${e.message}`));
+    throw new ParseError(errors);
   }
   return appConfig;
 }

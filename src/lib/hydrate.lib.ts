@@ -27,8 +27,9 @@ software without specific prior written permission.
 import * as fs from "fs-extra";
 import * as path from "path";
 import * as winston from "winston";
-import { getLogger, utils } from "./common";
+import { getLogger, utils, ParseError } from "./common";
 import { IPercyConfig } from "./interfaces";
+import * as _ from "lodash";
 
 /**
  * The hydrate methods.
@@ -59,7 +60,6 @@ export class Hydrate {
     appsRootFolderPath: string,
     outputFolder: string | undefined
   ): Promise<void> {
-    try {
       const percyConfig = await this.loadPercyConfig(appsRootFolderPath);
       const appFolders = await utils.findSubFolders(appsRootFolderPath);
 
@@ -84,10 +84,6 @@ export class Hydrate {
           "Error occurred while processing app folders: " + errorApps
         );
       }
-    } catch (e) {
-      this.logger.error(e);
-      throw e;
-    }
   }
 
   /**
@@ -101,7 +97,6 @@ export class Hydrate {
     percyConfig: IPercyConfig | undefined,
     outputFolder: string | undefined
   ): Promise<void> {
-    try {
       // If percy config is not provided look for it in directory
       if (!percyConfig) {
         percyConfig = await this.loadPercyConfig(appFolderPath, true);
@@ -116,8 +111,7 @@ export class Hydrate {
 
       const environments = await utils.loadEnvironmentsFile(
         appFolderPath,
-        this.options,
-        this.colorConsole
+        this.options
       );
       const yamlFiles = await utils.findYamlFiles(appFolderPath);
 
@@ -142,10 +136,6 @@ export class Hydrate {
       } else {
         throw new Error("Error occurred while processing files: " + errorFiles);
       }
-    } catch (e) {
-      this.logger.error(e);
-      throw e;
-    }
   }
 
   /**
@@ -167,8 +157,7 @@ export class Hydrate {
       if (!environments) {
         environments = await utils.loadEnvironmentsFile(
           directoryPath,
-          this.options,
-          this.colorConsole
+          this.options
         );
       }
       if (!percyConfig) {
@@ -187,8 +176,16 @@ export class Hydrate {
       }
       this.logger.info(`Successfully processed ${yamlFilePath}`);
     } catch (e) {
-      this.logger.error(`Error occurred while processing ${yamlFilePath}. `, e);
-      throw e;
+      if (e instanceof ParseError) {
+        getLogger(this.colorConsole).error(`${yamlFilePath} error: \n\t${_.join(e.messages, "\n\t")}.`);
+        throw e;
+      } else if (e.name === "YAMLException") {
+        getLogger(this.colorConsole).error(`${yamlFilePath} error: \n\t${e.name}: ${e.reason} (${e.mark.line + 1}:${e.mark.column + 1}).`);
+        throw new ParseError([new Error(`${e.name}: ${e.reason} (${e.mark.line + 1}:${e.mark.column + 1})`)]);
+      } else {
+        getLogger(this.colorConsole).error(`${yamlFilePath} error: \n\t${e.message}.`);
+        throw new ParseError([e]);
+      }
     }
   }
 
