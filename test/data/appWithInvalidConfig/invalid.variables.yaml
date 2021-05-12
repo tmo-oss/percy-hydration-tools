@@ -15,7 +15,7 @@ environments: !!map
   prod: !!map
     inherits: !!str qat
     apihost: !!str http://test.com${invalid_variable}
-    dcphost: !!str http://prod.dcp.com
+    dcphost: !!str http://prod.dcp.com${invalid_variable2}
     dcpendpoints: !!map
       dcpcart: !!str ${dcphost}/api/v2/cart
   dev: !!map

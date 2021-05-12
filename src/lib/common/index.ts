@@ -23,5 +23,6 @@ software without specific prior written permission.
 
 import getLogger from "./logger";
 import * as utils from "./utils";
+import { ParseError } from "./ParseError"
 
-export { getLogger, utils };
+export { getLogger, utils, ParseError };
