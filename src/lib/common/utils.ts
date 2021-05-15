@@ -181,13 +181,8 @@ function resolveVariables(
   // substitute
   let result = substitute(envNode, tokens, percyConfig);
 
-  // remove those starts with variableNamePrefix
-  if (percyConfig.variableNamePrefix) {
-    const validKeys = _.keys(result).filter(
-      key => !key.startsWith(percyConfig.variableNamePrefix)
-    );
-    result = _.pick(result, validKeys);
-  }
+  // remove variables key
+  result = _.omit(result, "variables");
   return result;
 }
 
@@ -207,7 +202,7 @@ function resolveTokens(
 ): Record<string, string> {
   const tokens: Record<string, string> = {};
   tokens[percyConfig.envVariableName] = env;
-  _.each(envNode, (value, key) => {
+  _.each(_.get(envNode, "variables", {}) as Record<string, unknown>, (value, key) => {
     if (!_.isArray(value) && !_.isObject(value)) {
       tokens[key] = value as string;
     }
@@ -245,7 +240,6 @@ function resolveTokens(
       break;
     }
   }
-
   return result;
 }
 
@@ -581,6 +575,12 @@ function validateAppConfig(
         type: "object"
       },
       environments: {
+        type: "object"
+      },
+      include: {
+        type: "object"
+      },
+      templates: {
         type: "object"
       }
     },

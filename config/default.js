@@ -29,7 +29,6 @@ module.exports = {
   DEFAULT_PERCY_CONFIG: {
     variablePrefix: process.env.PERCY_DEFAULT_VARIABLE_PREFIX || "_{",
     variableSuffix: process.env.PERCY_DEFAULT_VARIABLE_SUFFIX || "}_",
-    variableNamePrefix: process.env.PERCY_DEFAULT_VARIABLE_NAME_PREFIX || "$",
     envVariableName: process.env.PERCY_DEFAULT_ENV_VARIABLE_NAME || "env",
     envIgnorePrefix: process.env.PERCY_DEFAULT_ENV_IGNORE_PREFIX,
     envIgnoreSuffix: process.env.PERCY_DEFAULT_ENV_IGNORE_SUFFIX,

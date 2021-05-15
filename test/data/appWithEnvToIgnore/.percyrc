@@ -1,7 +1,6 @@
 {
   "variablePrefix": "${",
   "variableSuffix": "}",
-  "variableNamePrefix": "_",
   "envIgnorePrefix": "_",
   "envIgnoreSuffix": "_"
 }

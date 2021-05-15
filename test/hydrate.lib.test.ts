@@ -105,9 +105,12 @@ describe("hydrate", () => {
         "data/appWithInvalidConfig/no.default.yaml"
       );
       const outputFile = path.join(outputFolder, "/appWithInvalidConfig");
-      await assert.isRejected(
-        hydrate.hydrateFile(inputFile, undefined, undefined, outputFile),
-        `Invalid config file format (${inputFile})`);
+      try {
+        await hydrate.hydrateFile(inputFile, undefined, undefined, outputFile);
+        assert.fail("should throw error");
+      } catch (e) {
+        assert.match(e.messages[0], /requires property "default"/);
+      }
     });
 
     it("No environments block", async () => {
@@ -116,9 +119,12 @@ describe("hydrate", () => {
         "data/appWithInvalidConfig/no.environments.yaml"
       );
       const outputFile = path.join(outputFolder, "/appWithInvalidConfig");
-      await assert.isRejected(
-        hydrate.hydrateFile(inputFile, undefined, undefined, outputFile),
-        `Invalid config file format (${inputFile})`);
+      try {
+        await hydrate.hydrateFile(inputFile, undefined, undefined, outputFile);
+        assert.fail("should throw error");
+      } catch (e) {
+        assert.match(e.messages[0], /requires property "environments"/);
+      }
     });
 
     it("Env Contains New Property", async () => {
@@ -130,10 +136,12 @@ describe("hydrate", () => {
         outputFolder,
         "/appWithNewPropertyInEnvNode"
       );
-      await assert.isRejected(
-        hydrate.hydrateFile(inputFile, undefined, undefined, outputFile),
-        `Error in process file: ${inputFile}.\nCause: ` +
-          `Cannot find property: envNewProperty in env node: qat.`);
+      try {
+        await hydrate.hydrateFile(inputFile, undefined, undefined, outputFile);
+        assert.fail("should throw error");
+      } catch (e) {
+        assert.equal(e.messages[0], "evn.qat: Cannot find property envNewProperty in this node");
+      }
     });
 
     it("Env Contains inconsistent type Property", async () => {
@@ -145,10 +153,12 @@ describe("hydrate", () => {
         outputFolder,
         "/appWithNewPropertyInEnvNode"
       );
-      await assert.isRejected(
-        hydrate.hydrateFile(inputFile, undefined, undefined, outputFile),
-        `Error in process file: ${inputFile}.\nCause: ` +
-          `Type is different from default node for property: server.host in env node: qat.`);
+      try {
+        await hydrate.hydrateFile(inputFile, undefined, undefined, outputFile);
+        assert.fail("should throw error");
+      } catch (e) {
+        assert.equal(e.messages[0], "evn.qat: Type is different from default node for property server.host in this node");
+      }
     });
 
     it("Unresolvable variable", async () => {
@@ -157,9 +167,12 @@ describe("hydrate", () => {
         "data/appWithInvalidConfig/invalid.variables.yaml"
       );
       const outputFile = path.join(outputFolder, "/appWithInvalidConfig");
-      await assert.isRejected(
-        hydrate.hydrateFile(inputFile, undefined, undefined, outputFile),
-        `Cannot resolve variables at (${inputFile} env:prod)`);
+      try {
+        await hydrate.hydrateFile(inputFile, undefined, undefined, outputFile);
+        assert.fail("should throw error");
+      } catch (e) {
+        assert.equal(e.messages[0], "env.local: Cannot resolve variables for: middlewareurl");
+      }
     });
 
     it("Cyclic Inherits", async () => {
@@ -168,8 +181,12 @@ describe("hydrate", () => {
         "data/appWithCyclicInherits/app.config.yaml"
       );
       const outputFile = path.join(outputFolder, "/appWithCyclicInherits");
-      await assert.isRejected(
-        hydrate.hydrateFile(inputFile, undefined, undefined, outputFile), /Cyclic env inherits detected/);
+      try {
+        await hydrate.hydrateFile(inputFile, undefined, undefined, outputFile);
+        assert.fail("should throw error");
+      } catch (e) {
+        assert.match(e.messages[0], /Cyclic env inherits detected/);
+      }
     });
 
     it("Token Cyclic Reference", async () => {
@@ -181,8 +198,12 @@ describe("hydrate", () => {
         outputFolder,
         "/appWithTokenCyclicReference"
       );
-      await assert.isRejected(
-        hydrate.hydrateFile(inputFile, undefined, undefined, outputFile), /Cyclic variable reference detected/);
+      try {
+        await hydrate.hydrateFile(inputFile, undefined, undefined, outputFile);
+        assert.fail("should throw error");
+      } catch (e) {
+        assert.match(e.messages[0], /Cyclic variable reference detected/);
+      }
     });
 
     it("Token Cyclic Self Reference", async () => {
@@ -194,8 +215,12 @@ describe("hydrate", () => {
         outputFolder,
         "/appWithTokenCyclicReference"
       );
-      await assert.isRejected(
-        hydrate.hydrateFile(inputFile, undefined, undefined, outputFile), /Loop variable reference/);
+      try {
+        await hydrate.hydrateFile(inputFile, undefined, undefined, outputFile);
+        assert.fail("should throw error");
+      } catch (e) {
+        assert.match(e.messages[0], /Loop variable reference/);
+      }
     });
 
     it("With VariableNamePrefix key", async () => {

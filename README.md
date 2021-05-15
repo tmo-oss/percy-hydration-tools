@@ -104,7 +104,6 @@ The app folder can contain optional `.percyrc` files, which provide repository-s
 | envVariableName    | The YAML environment variable name  |
 | variablePrefix     | The YAML variable substitute prefix |
 | variableSuffix     | The YAML variable substitute suffix |
-| variableNamePrefix | The YAML variable name prefix       |
 | envIgnorePrefix    | The prefix of env to ignore         |
 | envIgnoreSuffix    | The suffix of env to ignore         |
 
@@ -117,7 +116,6 @@ Here is an example of `.percyrc` file:
   "envVariableName": "env",
   "variablePrefix": "{{",
   "variableSuffix": "}}",
-  "variableNamePrefix": "_",
   "envIgnorePrefix": "_",
   "envIgnoreSuffix": "_"
 }

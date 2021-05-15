@@ -16,6 +16,9 @@ default: !!map
     - !!str test2
     - !!seq
       - !!str substr1
+  variables:
+    dcphost: !!str test
+    api-path: !!str /path/to/api
 environments: !!map
   prod: !!map
     inherits: !!str qat
