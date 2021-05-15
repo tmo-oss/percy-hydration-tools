@@ -24,4 +24,6 @@ software without specific prior written permission.
 export default interface IAppConfig {
   default: Record<string, unknown>;
   environments: Record<string, unknown>;
+  templates?: Record<string, unknown>;
+  include?: []| string | Record<string, unknown>;
 }

@@ -49,31 +49,149 @@ export async function readAppConfigYAML(
   environments: string[],
   percyConfig: IPercyConfig
 ): Promise<Record<string, unknown>> {
-  const validatedAppConfig = validateAppConfig(appConfig, filePath);
-  const  envNodes = mergeEnvNodes(validatedAppConfig, environments);
-  const result = {};
+  const validatedAppConfig = validateAppConfig(appConfig);
+  const envNodes = mergeEnvNodes(validatedAppConfig, environments);
+  const templates = await parseTemplate(appConfig, filePath);
+  const extendsNodes = {}
   const errors: Error[] = []
+  // Resolve extends
+  _.each(envNodes, (envNode, environment) => tryRun(errors, environment, () => _.set(
+    extendsNodes,
+    environment,
+    resolveExtends(envNode as Record<string, unknown>, templates)
+  )));
+  if (!_.isEmpty(errors)) {
+    throw new ParseError(errors)
+  }
+
+  const result = {};
   // Resolve variables of each environment
-  _.each(envNodes, (envNode, environment) => {
-    try {
-      _.set(
-        result,
-        environment,
-        resolveVariables(envNode as Record<string, unknown>, environment, percyConfig)
-      );
-    } catch (e) {
-      if (e instanceof ParseError) {
-        e.appendPrefix(`env.${environment}: `)
-        errors.push(e)
-      } else {
-        errors.push(new Error(`env.${environment}: ${e.message}`))
-      }
-    }
-  });
+  _.each(extendsNodes, (envNode, environment) => tryRun(errors, environment, () => _.set(
+    result,
+    environment,
+    resolveVariables(envNode as Record<string, unknown>, environment, percyConfig)
+  )));
   if (!_.isEmpty(errors)) {
     throw new ParseError(errors)
   }
   return result;
+}
+
+/**
+ * Try to run and collect error if there is any
+ * @param errors the error collector
+ * @param env the environment
+ * @param runnable the runnable
+ */
+function tryRun(errors: Error[], env: string, runnable: () => void): void {
+  try {
+    runnable();
+  } catch (e) {
+    if (e instanceof ParseError) {
+      e.appendPrefix(`env.${env}: `)
+      errors.push(e)
+    } else {
+      errors.push(new Error(`env.${env}: ${e.message}`))
+    }
+  }
+}
+
+/**
+ * Parse templates object
+ * @param appConfig the app config
+ * @param filePath the filePath
+ * @returns template object
+ */
+async function parseTemplate(appConfig: IAppConfig, filePath: string): Promise<Record<string, unknown>> {
+  const templates: Record<string, unknown> = {};
+  const includeObject = await loadIncludeTemplate(filePath, appConfig.include);
+  _.assign(templates, includeObject)
+  if (appConfig.templates) {
+    _.assign(templates, appConfig.templates)
+  }
+  return templates;
+}
+
+/**
+ * Load include template
+ * @param filePath the filePath
+ * @param include the include value
+ * @returns obj include template
+ */
+async function loadIncludeTemplate(filePath: string, include?: []| string | Record<string, unknown>): Promise<Record<string, unknown>> {
+  if (_.isString(include)) {
+    if (isUrl(include)) {
+      return loadRemoteYAML(include);
+    } else {
+      return loadFileYAML(include, filePath);
+    }
+  } else if (_.isArray(include)) {
+    const includeObject = {}
+    for (const v of include) {
+      const nestedObject = await loadIncludeTemplate(filePath, v as []| string | Record<string, unknown>);
+      _.extend(includeObject, nestedObject);
+    }
+    return includeObject;
+  } else if (_.isObject(include)) {
+    if (include.local) {
+      return loadFileYAML(include.local as string, filePath);
+    } else if (include.remote) {
+      return loadRemoteYAML(include.remote as string);
+    } else if (include.project) {
+      return loadRemoteYAML(`https://gitlab.com/${include.project}/-/raw/${include.ref || "master"}${include.file}`)
+    } else {
+      throw new Error("include object must be one of [local, remote, project]");
+    }
+  }
+  return {}
+}
+
+/**
+ * Check if a string is a valid URL
+ * @param path the url
+ * @returns whether the path is url
+ */
+function isUrl(path: string): boolean {
+  try {
+    new URL(path);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+/**
+ * Load include file from local
+ * @param localPath the include path
+ * @param baseFilePath the source file path
+ * @returns include object
+ */
+async function loadFileYAML(localPath: string, baseFilePath: string): Promise<Record<string, unknown>> {
+  const filePath = path.resolve(path.dirname(baseFilePath), localPath);
+  const file = await fs.readFile(filePath, "utf8");
+  const includeObject =  yaml.load(file) as Record<string, unknown>;
+  if (includeObject.include) {
+    const nestedObject = await loadIncludeTemplate(filePath, includeObject.include as []| string | Record<string, unknown>);
+    _.extend(includeObject, nestedObject);
+    delete includeObject.include;
+  }
+  return includeObject;
+}
+
+/**
+ * Load include template from remote
+ * @param remotePath the remote path
+ * @returns include object
+ */
+async function loadRemoteYAML(remotePath: string): Promise<Record<string, unknown>> {
+  const res = await axios.get(remotePath, { responseType: "text" });
+  const includeObject =  yaml.load(res.data) as Record<string, unknown>;
+  if (includeObject.include) {
+    const nestedObject = await loadIncludeTemplate("/", includeObject.include as []| string | Record<string, unknown>);
+    _.extend(includeObject, nestedObject);
+    delete includeObject.include;
+  }
+  return includeObject;
 }
 
 /**
@@ -92,10 +210,7 @@ export async function loadEnvironmentsFile(
     throw new Error(`Environment file '${envFilePath}' doesn't exist`);
   }
   const appConfig = await readYAML(envFilePath);
-  const validatedAppConfig = validateAppConfig(
-    appConfig,
-    envFilePath
-  );
+  const validatedAppConfig = validateAppConfig(appConfig);
   return Object.keys(validatedAppConfig.environments);
 }
 
@@ -106,64 +221,65 @@ export async function loadEnvironmentsFile(
 export async function readYAML(filepath: string): Promise<IAppConfig> {
   const file = await fs.readFile(filepath, "utf8");
   const result = yaml.load(file) as IAppConfig
-  await loadInclude(result.default)
-  await loadInclude(result.environments)
   return result;
 }
 
 /**
- * Load include data
- * @param obj the include parent object
+ * Resolve extends references of an object
+ * @param obj input object
+ * @param env the environment name
+ * @param templates the template object
  */
-async function loadInclude(obj: Record<string, unknown>): Promise<Record<string, unknown>> {
-  for (const key in obj) {
-    if (key === "include" && _.isArray(obj[key])) {
-      for (const path of obj[key] as [string]) {
-        const includeRecord = await readIncludeYAML(path);
-        for (const iKey in includeRecord) {
-          _.set(obj, iKey, includeRecord[iKey]);
+function resolveExtends(
+  obj: Record<string, unknown>,
+  templates: Record<string, unknown>
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  const errors: Error[] = [];
+  _.each(obj, (value, key) => {
+    try {
+      if (key === "extends") {
+        const vals: string[] = []
+        if (_.isArray(value)) {
+          vals.push(...value)
+        } else if (_.isString(value)) {
+          vals.push(value)
+        } else {
+          throw new Error("the extends value must be array or string");
         }
+        _.each(vals, val => {
+          const templateValue = templates[val]
+          if (!templateValue) {
+            throw new Error(`the extends value ${val} doesn't exist`)
+          } else if (!_.isPlainObject(templateValue)) {
+            throw new Error(`the extends value ${val} isn't an object`)
+          } else {
+            _.each(templateValue as Record<string, unknown>, (v, key) => {
+              result[key] = v;
+            });
+          }
+        })
+      } else if (_.isArray(value)) {
+        result[key] = _.map(value, v => {
+          if (_.isPlainObject(v)) {
+            return resolveExtends(v as Record<string, unknown>, templates);
+          } else {
+            return v;
+          }
+        });
+      } else if (_.isObject(value)) {
+        result[key] = resolveExtends(value as Record<string, unknown>, templates);
+      } else {
+        result[key] = value
       }
-      delete obj.include
-    } else if (key === "include" && _.isString(obj[key])) {
-      const includeRecord = await readIncludeYAML(obj[key] as string);
-      for (const iKey in includeRecord) {
-        _.set(obj, iKey, includeRecord[iKey]);
-      }
-      delete obj.include
-    } else if (_.isObject(obj[key])) {
-      await loadInclude(obj[key] as Record<string, unknown>);
+    } catch (e) {
+      errors.push(e);
     }
+  });
+  if (!_.isEmpty(errors)) {
+    throw new ParseError(errors);
   }
-  return obj;
-}
-
-/**
- * Read include yaml and parse it
- * @param path the include path
- */
-async function readIncludeYAML(path: string): Promise<Record<string, unknown>> {
-  if (isUrl(path)) {
-    const res = await axios.get(path, { responseType: "text" });
-    return yaml.load(res.data) as Record<string, unknown>;
-  } else {
-    const file = await fs.readFile(path, "utf8");
-    return yaml.load(file) as Record<string, unknown>;
-  }
-}
-
-/**
- * Check if a string is a valid URL
- * @param path the url
- * @returns whether the path is url
- */
-function isUrl(path: string): boolean {
-  try {
-    new URL(path);
-    return true;
-  } catch (err) {
-    return false;
-  }
+  return result;
 }
 
 /**
@@ -409,7 +525,7 @@ function addTokenReference(
  */
 function mergeEnvNodes(
   appConfig: IAppConfig,
-  environments: string[]
+  environments: string[],
 ): Record<string, unknown> {
   const mergedEnvNodes: Record<string, unknown> = {};
   const errors: Error[] = []
@@ -444,7 +560,7 @@ function mergeEnvNodes(
 function mergeEnvNode(
   mergedEnvNodes: unknown,
   env: string,
-  appConfig: IAppConfig
+  appConfig: IAppConfig,
 ) {
   const parentEnvNode = getParentEnvNode(mergedEnvNodes, env, appConfig);
   const currentEnvNode = _.get(appConfig.environments, env);
@@ -476,7 +592,11 @@ function mergeProperties(
     if (key !== "inherits") {
       const name = propertyName ? `${propertyName}.${key}` : key;
       if (!_.has(dest, key)) {
-        errors.push(new Error(`evn.${env}: Cannot find property ${name} in this node`))
+        if (key === "extends" || key === "variables") {
+          _.set(dest, key, value);
+        } else {
+          errors.push(new Error(`evn.${env}: Cannot find property ${name} in this node`))
+        }
         return
       }
       const valueInDest = _.get(dest, key);
@@ -566,7 +686,6 @@ function sortEnvByInherits(environments: string[], envNodes: Record<string, unkn
  */
 function validateAppConfig(
   appConfig: IAppConfig,
-  configFilePath?: string
 ): IAppConfig {
   const schema = {
     id: "/AppConfig",
@@ -578,7 +697,7 @@ function validateAppConfig(
         type: "object"
       },
       include: {
-        type: "object"
+        type: ["object", "array", "string"]
       },
       templates: {
         type: "object"
@@ -590,7 +709,7 @@ function validateAppConfig(
   const v = new Validator();
   const result = v.validate(appConfig, schema);
   if (!result.valid) {
-    const errors = _.map(result.errors, e => new Error(`config.${configFilePath}: ${e.message}`));
+    const errors = _.map(result.errors, e => new Error(`${e.message}`));
     throw new ParseError(errors);
   }
   return appConfig;
