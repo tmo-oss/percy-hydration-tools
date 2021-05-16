@@ -9,8 +9,13 @@ default: !!map
   server.url: !!bool true
   host: !!bool false
   jwt.enabled: false
+  on_failure: failure
+  on_success: success
   service:
     products: default/products
+  test_extends:
+    extends:
+      - external.test_extends
 environments: !!map
   prod: !!map
     jwt.enabled: !!bool true
@@ -19,8 +24,8 @@ environments: !!map
     service:
       products: ${baseUrl}/products
   dev: !!map
+    inherits: prod
     server.url: !!bool true
     host: !!bool false
     extends:
       - email
-      - env
