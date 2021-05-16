@@ -11,6 +11,9 @@ invalid: !!map
     dcpupdate: !!str ${dcphost}/api/update
     dcprefund: !!str ${dcphost}/api/refund
   newProperty: !!str test
+  variables:
+    dcphost: !!str https://default.api.test.com
+    api-path: !!str /path/to/api
 environments: !!map
   prod: !!map
     inherits: !!str qat

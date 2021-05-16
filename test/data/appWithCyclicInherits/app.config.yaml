@@ -6,6 +6,9 @@ default: !!map
   dcphost: !!str https://default.api.test.com
   api-path: !!str /path/to/api
   apihost: !!str http://txnext-gen.com${api-path}
+  variables:
+    dcphost: !!str https://default.api.test.com
+    api-path: !!str /path/to/api
   dcpendpoints: !!map
     dcpcart: !!str ${dcphost}/api/cart
     dcpupdate: !!str ${dcphost}/api/update

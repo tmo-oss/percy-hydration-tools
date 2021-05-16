@@ -4,6 +4,8 @@ default: !!map
   middlewareurl: !!str https://default.middleware.test.com  # Backend MW url
   dcphost: !!str https://default.api.test.com
   api-path: !!str /path/to/api
+  variables:
+    dcphost: !!str https://default.api.test.com
 environments: !!map
   prod: !!map
     inherits: !!str qat

@@ -1,6 +1,5 @@
 {
   "variablePrefix": "${",
-  "variableNamePrefix": "?",
   "newField": {
     "field": 0
   }

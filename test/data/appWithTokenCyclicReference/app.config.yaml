@@ -13,6 +13,12 @@ default: !!map
   newProperty: !!str ${newProperty2}
   newProperty2: !!str ${newProperty3}
   newProperty3: !!str ${newProperty}
+  variables:
+    dcphost: !!str ${api-path}
+    api-path: !!str /path/to/api
+    newProperty: !!str ${newProperty2}
+    newProperty2: !!str ${newProperty3}
+    newProperty3: !!str ${newProperty}
 environments: !!map
   prod: !!map
     inherits: !!str qat

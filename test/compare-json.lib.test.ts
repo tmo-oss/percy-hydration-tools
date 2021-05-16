@@ -49,7 +49,6 @@ describe("compare-json", () => {
       compareJson.compare("test/data/.percyrc", "test/data/modified.percyrc"),
       {
         newField: [{ field: 0 }],
-        variableNamePrefix: ["_", "?"],
         variableSuffix: ["}", 0, 0]
       });
   });

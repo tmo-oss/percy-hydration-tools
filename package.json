@@ -14,7 +14,7 @@
     "tsc": "tsc",
     "lint": "eslint ./src ./test --ext .ts",
     "lint:fix": "eslint ./src ./test --ext .ts --fix",
-    "test": "nyc mocha test/*.test.ts",
+    "test": "nyc mocha test/*.test.ts -t 10000",
     "compare-json": "ts-node src/compare-json.ts",
     "hydrate": "ts-node src/hydrate.ts",
     "compare-json.js": "node dist/compare-json.js",
