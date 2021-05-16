@@ -33,6 +33,7 @@ import * as _ from "lodash";
 import * as path from "path";
 import { IAppConfig, IPercyConfig } from "../interfaces";
 import { ParseError } from "./index";
+import * as config from "config";
 /* eslint-disable @typescript-eslint/no-var-requires */
 const plantuml = require("node-plantuml");
 
@@ -50,23 +51,23 @@ export async function readAppConfigYAML(
   percyConfig: IPercyConfig
 ): Promise<Record<string, unknown>> {
   const validatedAppConfig = validateAppConfig(appConfig);
-  const envNodes = mergeEnvNodes(validatedAppConfig, environments);
   const templates = await parseTemplate(appConfig, filePath);
-  const extendsNodes = {}
   const errors: Error[] = []
   // Resolve extends
-  _.each(envNodes, (envNode, environment) => tryRun(errors, environment, () => _.set(
-    extendsNodes,
+  _.each(validatedAppConfig.environments, (envNode, environment) => tryRun(errors, environment, () => _.set(
+    validatedAppConfig.environments,
     environment,
     resolveExtends(envNode as Record<string, unknown>, templates)
   )));
+  tryRun(errors, "default", () => _.set(validatedAppConfig, "default", resolveExtends(validatedAppConfig.default, templates)))
   if (!_.isEmpty(errors)) {
     throw new ParseError(errors)
   }
 
+  const envNodes = mergeEnvNodes(validatedAppConfig, environments);
   const result = {};
   // Resolve variables of each environment
-  _.each(extendsNodes, (envNode, environment) => tryRun(errors, environment, () => _.set(
+  _.each(envNodes, (envNode, environment) => tryRun(errors, environment, () => _.set(
     result,
     environment,
     resolveVariables(envNode as Record<string, unknown>, environment, percyConfig)
@@ -138,7 +139,7 @@ async function loadIncludeTemplate(filePath: string, include?: []| string | Reco
     } else if (include.remote) {
       return loadRemoteYAML(include.remote as string);
     } else if (include.project) {
-      return loadRemoteYAML(`https://gitlab.com/${include.project}/-/raw/${include.ref || "master"}${include.file}`)
+      return loadProjectYAML(include as Record<string, string>)
     } else {
       throw new Error("include object must be one of [local, remote, project]");
     }
@@ -195,6 +196,31 @@ async function loadRemoteYAML(remotePath: string): Promise<Record<string, unknow
 }
 
 /**
+ * Load include template from gitlab project
+ * @param include the project object
+ * @returns include object
+ */
+ async function loadProjectYAML(include: Record<string, string>): Promise<Record<string, unknown>> {
+  const url = `https://gitlab.com/api/v4/projects/${encodeURIComponent(include.project)}/repository/files/${encodeURIComponent(include.file)}/raw?ref=${include.ref || "master"}`;
+  const options: Record<string, unknown> = { responseType: "text" };
+  if (config.has("GITLAB_ACCESS_TOKEN")) {
+    options.headers = {"PRIVATE-TOKEN": config.get("GITLAB_ACCESS_TOKEN")}
+  }
+  try {
+    const res = await axios.get(url, options);
+    const includeObject =  yaml.load(res.data) as Record<string, unknown>;
+    if (includeObject.include) {
+      const nestedObject = await loadIncludeTemplate("/", includeObject.include as []| string | Record<string, unknown>);
+      _.extend(includeObject, nestedObject);
+      delete includeObject.include;
+    }
+    return includeObject;
+  } catch(e) {
+    throw new Error(`get project file ${include.project}.${include.file} error: ${e.message}`);
+  }
+}
+
+/**
  * Read environment file
  * @param envFileFolderPath environment file path
  * @param configOptions the hydrate lib options.
@@ -248,7 +274,7 @@ function resolveExtends(
           throw new Error("the extends value must be array or string");
         }
         _.each(vals, val => {
-          const templateValue = templates[val]
+          const templateValue = _.get(templates, val)
           if (!templateValue) {
             throw new Error(`the extends value ${val} doesn't exist`)
           } else if (!_.isPlainObject(templateValue)) {
@@ -592,7 +618,7 @@ function mergeProperties(
     if (key !== "inherits") {
       const name = propertyName ? `${propertyName}.${key}` : key;
       if (!_.has(dest, key)) {
-        if (key === "extends" || key === "variables") {
+        if (key === "variables") {
           _.set(dest, key, value);
         } else {
           errors.push(new Error(`evn.${env}: Cannot find property ${name} in this node`))

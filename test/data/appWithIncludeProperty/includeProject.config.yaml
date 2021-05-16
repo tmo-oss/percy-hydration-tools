@@ -1,0 +1,16 @@
+
+include: 
+  - project: tmo-poc/hydration-tool
+    file: test/data/apps/shop/toggles.config.yaml
+default: !!map
+  server.url: !!bool true
+  host: !!bool false
+  jwt.enabled: false
+  extends:
+    - environments.prod
+environments: !!map
+  prod: !!map
+    jwt.enabled: !!bool true
+  dev: !!map
+    server.url: !!bool true
+    host: !!bool false
