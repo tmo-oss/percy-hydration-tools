@@ -618,16 +618,16 @@ function mergeProperties(
     if (key !== "inherits") {
       const name = propertyName ? `${propertyName}.${key}` : key;
       if (!_.has(dest, key)) {
-        if (key === "variables") {
+        if (key === "variables" || _.startsWith(name, "variables.")) {
           _.set(dest, key, value);
         } else {
-          errors.push(new Error(`evn.${env}: Cannot find property ${name} in this node`))
+          errors.push(new Error(`env.${env}: Cannot find property ${name} in this node`))
         }
         return
       }
       const valueInDest = _.get(dest, key);
       if (typeof valueInDest !== typeof value) {
-        errors.push(new Error(`evn.${env}: Type is different from default node for property ${name} in this node`))
+        errors.push(new Error(`env.${env}: Type is different from default node for property ${name} in this node`))
         return
       }
 

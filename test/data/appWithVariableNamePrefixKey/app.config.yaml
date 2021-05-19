@@ -58,4 +58,5 @@ environments: !!map
     inherits: !!str dev
     variables:
       _middlewareurl: !!str https://tx.tugs.qat.com  # Production middleware endpoint
-    apihost: !!str http://test.com${_api-path}
+      newvar: !!str newvar
+    apihost: !!str http://test.com${_api-path}/${newvar}

@@ -140,7 +140,7 @@ describe("hydrate", () => {
         await hydrate.hydrateFile(inputFile, undefined, undefined, outputFile);
         assert.fail("should throw error");
       } catch (e) {
-        assert.equal(e.messages[0], "evn.qat: Cannot find property envNewProperty in this node");
+        assert.equal(e.messages[0], "env.qat: Cannot find property envNewProperty in this node");
       }
     });
 
@@ -157,7 +157,7 @@ describe("hydrate", () => {
         await hydrate.hydrateFile(inputFile, undefined, undefined, outputFile);
         assert.fail("should throw error");
       } catch (e) {
-        assert.equal(e.messages[0], "evn.qat: Type is different from default node for property server.host in this node");
+        assert.equal(e.messages[0], "env.qat: Type is different from default node for property server.host in this node");
       }
     });
 
@@ -248,6 +248,9 @@ describe("hydrate", () => {
           "app.config.json"
         );
         const expectedJson = await fs.readJson(expectedJsonPath);
+        if (env === "qat") {
+          expectedJson.apihost = `${expectedJson.apihost}/newvar`
+        }
         assert.deepEqual(json, expectedJson);
       }
     });
