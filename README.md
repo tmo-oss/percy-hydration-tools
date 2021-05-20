@@ -121,6 +121,37 @@ Here is an example of `.percyrc` file:
 }
 ```
 
+
+## YAML Config File Format
+
+The yaml file should have the following structure: 
+
+```yaml
+include:
+  ...
+templates:
+  ...
+default:
+  variables:
+    ...
+  ...
+environments:
+  env1:
+    variables:
+      ...
+    ...
+  envX:
+    ...
+```
+
+The `include` node can include local file or remote file in the git repo. The nodes from the included files will be included as the template nodes (refer to the `templates` node below for more details). 
+
+The `templates` node defines the template nodes, which can be extended by the other env or node.  
+
+The `default` node defines the default variables and properties for all environments. And its `variables` child node defines all the variables that can be referenced in the properties. 
+
+The `environments` node defines all the environments, and they inherit the `default` environment by default. In each environment, we can inherit the other environment, extend a template node, and override or define new variables. 
+
 Here is an example of `app.config.yaml` file:
 
 ```yaml
