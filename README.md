@@ -176,14 +176,18 @@ default:  # This is the default template that all environments inherit from
 environments:
    dev:
       variables:
-         dev-local-var: "fortune"
+         dev-local-var: "fortune"  # a new variable for dev environment
       messages:
          - "${dev-local-var} favors the bold"
          - "${dev-local-var} must be earned"
    qat:
       inherits: dev
       variables:
-         _sessionHost: "https://qat1.services.com"
+         _sessionHost: "https://qat1.services.com"  # override the variable in default environment
+
+   local:
+      extends:  # extend the .local template node
+         - .local
 
 ```
 
