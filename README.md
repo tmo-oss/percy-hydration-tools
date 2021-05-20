@@ -121,6 +121,41 @@ Here is an example of `.percyrc` file:
 }
 ```
 
+Here is an example of `app.config.yaml` file:
+
+```yaml
+include:  # the include files can be extended by env or any node in the current file.
+  - local: '.default-config.yml'
+  - project: 'tmobile/digital/tos/tos-config' # the gitlab project
+    file: '/apps/shop/.templates.yaml'
+templates:  # this is a dictionary of objects that can be extended from
+   .local:
+      variables
+         baseUrl: 'https://my.services.com'
+   .services:
+      products: `${baseUrl}/products`
+      accounts:  `${baseUrl}/
+default:  # This is the default template that all environments inherit from 
+   extends:
+      - .shop.default. # this is the template that was loaded from the include file  '.default-config.yml'
+   variables: # place the transitional variables under a common node.
+      _sessionHost: "https://${env}.my-service.com"
+   messages:
+      - "some string"
+environments:
+   dev:
+      variables:
+         dev-local-var: "fortune"
+      messages:
+         - "${dev-local-var} favors the bold"
+         - "${dev-local-var} must be earned"
+   qat:
+      inherits: dev
+      variables:
+         _sessionHost: "https://qat1.services.com"
+
+```
+
 ## Installation
 
 ```bash
