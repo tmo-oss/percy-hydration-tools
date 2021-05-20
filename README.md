@@ -161,11 +161,11 @@ include:  # the include files can be extended by env or any node in the current 
     file: '/apps/shop/.templates.yaml'
 templates:  # this is a dictionary of objects that can be extended from
    .local:
-      variables
+      variables:
          baseUrl: 'https://my.services.com'
    .services:
-      products: `${baseUrl}/products`
-      accounts:  `${baseUrl}/
+      products: ${baseUrl}/products
+      accounts:  ${baseUrl}/accounts
 default:  # This is the default template that all environments inherit from 
    extends:
       - .shop.default. # this is the template that was loaded from the include file  '.default-config.yml'
