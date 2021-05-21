@@ -1,0 +1,22 @@
+{
+  "server.host": 1,
+  "mytx.server.host": "https://default.my.test.com",
+  "middlewareapipath": "test/mw/api/path",
+  "middlewareurl": "https://tx.tugs.dev.com",
+  "dcphost": "test",
+  "api-path": "/path/to/api",
+  "apihost": "http://test.com/path/to/api",
+  "dcpendpoints": {
+    "dcpcart": "test/api/cart",
+    "dcpupdate": "test/api/update",
+    "dcprefund": "test/api/refund"
+  },
+  "testProperty": "hello",
+  "testarray": [
+    "test1",
+    "test2",
+    [
+      "substr1"
+    ]
+  ]
+}
