@@ -1,6 +1,5 @@
 {
   "variablePrefix": "${",
   "variableSuffix": "}",
-  "envIgnorePrefix": "_",
-  "envIgnoreSuffix": "_"
+  "envIgnoreSuffix": "tpl_"
 }

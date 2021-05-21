@@ -12,7 +12,7 @@ default: !!map
     dcpcart: !!str "${_dcphost}/api/cart"
     dcpupdate: !!str "${_dcphost}/api/update"
     dcprefund: !!str "${_dcphost}/api/refund"
-  newProperty: !!str "test"
+  testProperty: !!str "test"
   httpCacheConfig: !!map
     cacheUrls: !!seq
       - !!map &cacheUrls-0
@@ -52,7 +52,7 @@ environments: !!map
     variables:
       _middlewareurl: !!str "https://tx.tugs.dev.com"  # Production middleware endpoint
     apihost: !!str "http://test.com${_api-path}"
-    newProperty: !!str "hello"
+    testProperty: !!str "hello"
   qat: !!map
     inherits: !!str "dev"
     variables:

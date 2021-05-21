@@ -10,7 +10,7 @@ default: !!map
     dcpcart: !!str ${dcphost}/api/cart
     dcpupdate: !!str ${dcphost}/api/update
     dcprefund: !!str ${dcphost}/api/refund
-  newProperty: !!str test
+  testProperty: !!str test
   variables:
     dcphost: !!str https://default.api.test.com
     api-path: !!str /path/to/api
@@ -24,7 +24,7 @@ environments: !!map
   dev: !!map
     middlewareurl: !!str https://tx.tugs.dev.com  # Production middleware endpoint
     apihost: !!str http://test.com${api-path}
-    newProperty: !!str hello
+    testProperty: !!str hello
   qat: !!map
     inherits: !!str dev
     middlewareurl: !!str https://tx.tugs.qat.com  # Production middleware endpoint

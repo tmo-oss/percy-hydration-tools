@@ -1,0 +1,19 @@
+
+default: !!map
+
+  variables:
+    api-path: !!str /path/to/api
+
+  apihost: !!str http://test.com${api-path}
+  path: !!str ${env}/file.json
+
+environments: !!map
+
+  tpl_basic: !!map    # this is a template for an environment. This must be inherited by an actual environment.
+    path: !!str ${env}/filename.json
+
+  dev: !!map
+    inherits: !!str tpl_basic
+    variables:
+      api-path: !!str /path/to/api/v2
+

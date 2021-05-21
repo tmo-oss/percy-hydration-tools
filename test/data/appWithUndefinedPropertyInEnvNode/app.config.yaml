@@ -1,0 +1,11 @@
+# CrashTestDummy
+# This config will fail to parse because
+# local env references a property not defined in default node
+
+default: !!map
+  message: !!str test
+
+environments: !!map
+
+  local: !!map
+    undefinedProperty: !!str test  # Cannot use property not already defined in `default`

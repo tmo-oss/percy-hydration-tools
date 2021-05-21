@@ -1,0 +1,15 @@
+
+# CrashTestDummy:
+# This config will fail to hydrate as it references an undefined variable.
+
+default: !!map
+
+  variables:
+    api-path: !!str /path/to/api
+
+  apihost: !!str http://txnext-gen.com${api-path}
+
+environments: !!map
+
+  local: !!map
+    apihost: !!str http://test.com${undefined_variable}       # Variable is not defined !!!

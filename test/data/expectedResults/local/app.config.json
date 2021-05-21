@@ -9,7 +9,7 @@
     "dcpupdate": "https://default.api.test.com/api/update",
     "dcprefund": "https://default.api.test.com/api/refund"
   },
-  "newProperty": "test",
+  "testProperty": "test",
   "httpCacheConfig": {
     "cacheUrls": [
       {

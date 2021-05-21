@@ -1,0 +1,17 @@
+
+# CrashTestDummy:
+# This config will fail parse becuase it does not contain a root level `default` node.
+
+invalid: !!map
+  testProperty: !!str test
+
+environments: !!map
+
+  dev: !!map
+    testProperty: !!str hello
+
+  qat: !!map
+    inherits: !!str dev
+
+  prod: !!map
+    inherits: !!str qat

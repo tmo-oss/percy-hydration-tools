@@ -1,0 +1,4 @@
+{
+  "path": "local/file.json",
+  "apihost": "http://test.com/path/to/api"
+}

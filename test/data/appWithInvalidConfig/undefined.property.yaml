@@ -1,0 +1,12 @@
+# CrashTestDummy:
+#
+
+default: !!map
+
+  message: !!str "This config will fail to hydrate"
+
+environments: !!map
+
+  dev: !!map
+    undefinedProperty: !!str hello  # Fail!  not defined in `default` node.
+

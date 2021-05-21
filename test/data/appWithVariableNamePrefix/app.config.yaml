@@ -1,0 +1,23 @@
+# appWithVariableNamePrefix
+#
+
+default: !!map
+  # the following are config properties that hydrate to every environment config.
+  middlewareapipath: !!str ${_middlewareurl}/mw/api/path
+  apihost: !!str http://txnext-gen.com${_api-path}
+
+  # The following are temporary variables used for string interpolation within property values.
+  variables: !!map
+    _middlewareurl: !!str https://default.middleware.test.com  # Backend MW url
+    _api-path: !!str /path/to/api
+
+environments: !!map
+
+  dev: !!map
+    variables: !!map
+      _middlewareurl: !!str https://tx.tugs.dev.com
+
+  qat: !!map
+    inherits: !!str dev
+
+    apihost: !!str http://test.com${_api-path}

@@ -1,0 +1,4 @@
+{
+  "middlewareapipath": "https://tx.tugs.dev.com/mw/api/path",
+  "apihost": "http://test.com/path/to/api"
+}
