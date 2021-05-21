@@ -1,0 +1,5 @@
+{
+  "server.url": true,
+  "host": false,
+  "jwt.enabled": true
+}

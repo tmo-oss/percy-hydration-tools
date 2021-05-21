@@ -1,0 +1,14 @@
+{
+  "server.url": true,
+  "host": false,
+  "jwt.enabled": true,
+  "on_failure": "change",
+  "on_success": "never",
+  "service": {
+    "products": "https://my.services.com/products"
+  },
+  "test_extends": {
+    "key1": "default",
+    "key2": "default2"
+  }
+}
