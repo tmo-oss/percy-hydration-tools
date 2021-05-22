@@ -1,0 +1,13 @@
+# CrashTestDummy:
+# This config will fail to hydrate as cyclic token reference.
+
+default: !!map
+  server.host: !!int 1  # tx server url
+  variables:
+    testProperty: !!str ${testProperty2}
+    testProperty2: !!str ${testProperty3}
+    testProperty3: !!str ${testProperty} # cyclic token reference
+environments: !!map
+  prod: !!map
+  dev: !!map
+  qat: !!map

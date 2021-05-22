@@ -2,12 +2,7 @@
 include: 
   remote: 'https://gitee.com/ahviplc/ts-axios/raw/master/.travis.yml'
 default: !!map
-  server.url: !!bool true
-  host: !!bool false
-  jwt.enabled: false
+  test_extends:
+    extends:
+      - notifications
 environments: !!map
-  prod: !!map
-    jwt.enabled: !!bool true
-  dev: !!map
-    server.url: !!bool true
-    host: !!bool false

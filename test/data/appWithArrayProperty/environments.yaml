@@ -4,3 +4,4 @@ environments: !!map
   local: !!map
   dev: !!map
   qat: !!map
+  prod: !!map

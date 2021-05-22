@@ -1,5 +1,9 @@
 {
-  "server.url": true,
-  "host": false,
-  "jwt.enabled": false
+  "file_extends": {
+    "key1": "default",
+    "key2": "default2"
+  },
+  "url_extends": {
+    "email": false
+  }
 }

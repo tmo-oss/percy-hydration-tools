@@ -115,17 +115,6 @@ describe("hydrate", () => {
       await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
     });
 
-    it("With VariableNamePrefix", async () => {
-
-      const testFolderName = "appWithVariableNamePrefix";
-      const testConfigFileName = "app.config";
-
-      const configEnvironments = ["dev", "local", "qat"];
-
-      await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
-
-    });
-
     it("With template environment to Ignore", async () => {
 
       const testFolderName = "appWithTemplateEnvToIgnore";
@@ -138,7 +127,7 @@ describe("hydrate", () => {
     });
 
     it("Config with array", async () => {
-      const testFolderName = "appWithTokenCyclicReference";
+      const testFolderName = "appWithArrayProperty";
       const testConfigFileName = "array.config";
 
       const configEnvironments = ["dev", "local", "prod", "qat"];
@@ -188,13 +177,6 @@ describe("hydrate", () => {
       await assert.becomes(hydrate.hydrateApp(inputFile, undefined, undefined), undefined);
       expect(fs.existsSync(outputFolder)).toBeFalsy();
     });
-    it("No environments file", async () => {
-      const inputFile = path.join(__dirname, "data/appWithoutEnvironments");
-      const outputFile = path.join(outputFolder, "/appWithoutEnvironments");
-      const envFileName: string = config.get("ENVIRONMENT_FILE_NAME");
-      const envFilePath = path.join(inputFile, envFileName);
-      await assert.isRejected(hydrate.hydrateApp(inputFile, undefined, outputFile), `Environment file '${envFilePath}' doesn't exist`);
-    });
   });
 
   describe("All", () => {
@@ -217,6 +199,14 @@ describe("hydrate", () => {
 
     beforeEach(() => {
       console.error(chalk.red("!!! Crash Test Dummy: Error is expected !!!"));
+    });
+
+    it("No environments file", async () => {
+      const inputFile = path.join(__dirname, "data/appWithInvalidConfig/appWithoutEnvironments");
+      const outputFile = path.join(outputFolder, "/appWithInvalidConfig/appWithoutEnvironments");
+      const envFileName: string = config.get("ENVIRONMENT_FILE_NAME");
+      const envFilePath = path.join(inputFile, envFileName);
+      await assert.isRejected(hydrate.hydrateApp(inputFile, undefined, outputFile), `Environment file '${envFilePath}' doesn't exist`);
     });
 
     it("Missing 'default' node", async () => {
@@ -247,31 +237,14 @@ describe("hydrate", () => {
       }
     });
 
-    it("Environment contains undefined property", async () => {
-      const inputFile = path.join(
-          __dirname,
-          "data/appWithUndefinedPropertyInEnvNode/app.config.yaml"
-      );
-      const outputFile = path.join(
-          outputFolder,
-          "/appWithUndefinedPropertyInEnvNode"
-      );
-      try {
-        await hydrate.hydrateFile(inputFile, undefined, undefined, outputFile);
-        assert.fail("should throw error");
-      } catch (e) {
-        expect(e.messages[0]).toEqual("env.local: Cannot find property undefinedProperty in this node");
-      }
-    });
-
     it("Env Contains inconsistent type Property", async () => {
       const inputFile = path.join(
           __dirname,
-          "data/appWithUndefinedPropertyInEnvNode/type-test.config.yaml"
+          "data/appWithInvalidConfig/inconsistent.type.property.yaml"
       );
       const outputFile = path.join(
           outputFolder,
-          "/appWithUndefinedPropertyInEnvNode"
+          "/appWithInvalidConfig"
       );
       try {
         await hydrate.hydrateFile(inputFile, undefined, undefined, outputFile);
@@ -315,9 +288,9 @@ describe("hydrate", () => {
     it("Cyclic Inherits", async () => {
       const inputFile = path.join(
           __dirname,
-          "data/appWithCyclicInherits/app.config.yaml"
+          "data/appWithInvalidConfig/cyclic.env.inherits.yaml"
       );
-      const outputFile = path.join(outputFolder, "/appWithCyclicInherits");
+      const outputFile = path.join(outputFolder, "/appWithInvalidConfig");
       try {
         await hydrate.hydrateFile(inputFile, undefined, undefined, outputFile);
         assert.fail("should throw error");
@@ -329,11 +302,11 @@ describe("hydrate", () => {
     it("Token Cyclic Reference", async () => {
       const inputFile = path.join(
           __dirname,
-          "data/appWithTokenCyclicReference/app.config.yaml"
+          "data/appWithInvalidConfig/cyclic.token.reference.yaml"
       );
       const outputFile = path.join(
           outputFolder,
-          "/appWithTokenCyclicReference"
+          "/appWithInvalidConfig"
       );
       try {
         await hydrate.hydrateFile(inputFile, undefined, undefined, outputFile);
@@ -346,11 +319,11 @@ describe("hydrate", () => {
     it("Token Cyclic Self Reference", async () => {
       const inputFile = path.join(
           __dirname,
-          "data/appWithTokenCyclicReference/self-reference.yaml"
+          "data/appWithInvalidConfig/self-reference.yaml"
       );
       const outputFile = path.join(
           outputFolder,
-          "/appWithTokenCyclicReference"
+          "/appWithInvalidConfig"
       );
       try {
         await hydrate.hydrateFile(inputFile, undefined, undefined, outputFile);

@@ -1,0 +1,9 @@
+{
+  "testarray": [
+    "test1",
+    "test2",
+    [
+      "substr1"
+    ]
+  ]
+}
