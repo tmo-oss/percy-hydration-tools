@@ -1,5 +1,5 @@
 {
-  "server.url": true,
-  "host": false,
-  "jwt.enabled": false
+  "test_extends": {
+    "email": false
+  }
 }

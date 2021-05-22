@@ -1,10 +1,5 @@
 
 default: !!map
-
-  variables:
-    api-path: !!str /path/to/api
-
-  apihost: !!str http://test.com${api-path}
   path: !!str ${env}/file.json
 
 environments: !!map
@@ -14,6 +9,3 @@ environments: !!map
 
   dev: !!map
     inherits: !!str tpl_basic
-    variables:
-      api-path: !!str /path/to/api/v2
-

@@ -1,5 +1,0 @@
-{
-  "variablePrefix": "${",
-  "variableSuffix": "}",
-  "envIgnoreSuffix": "tpl_"
-}

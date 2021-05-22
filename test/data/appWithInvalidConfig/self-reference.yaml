@@ -1,0 +1,10 @@
+# CrashTestDummy:
+# This config will fail to hydrate as self reference.
+
+default: !!map
+  variables:
+    middlewareurl: !!str https://${middlewareurl} # self reference
+environments: !!map
+  dev: !!map
+  qat: !!map
+  prod: !!map
