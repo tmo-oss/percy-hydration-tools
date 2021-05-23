@@ -1,0 +1,5 @@
+default: !!map
+# This is where we can define deployment environment data to be used by CICD.
+environments: !!map
+  local: !!map
+  dev: !!map

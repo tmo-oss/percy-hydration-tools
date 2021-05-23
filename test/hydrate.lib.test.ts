@@ -161,6 +161,51 @@ describe("hydrate", () => {
 
       await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
     });
+
+    it("Config with template", async () => {
+      const testFolderName = "appWithTemplate";
+      const testConfigFileName = "app.config";
+
+      const configEnvironments = ["dev", "local"];
+
+      await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
+    });
+
+    it("Config with inherits env", async () => {
+      const testFolderName = "appWithInheritsEnv";
+      const testConfigFileName = "app.config";
+
+      const configEnvironments = ["dev", "local"];
+
+      await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
+    });
+
+    it("Config with variable", async () => {
+      const testFolderName = "appWithVariable";
+      const testConfigFileName = "app.config";
+
+      const configEnvironments = ["dev", "local"];
+
+      await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
+    });
+
+    it("Config with inherits variable", async () => {
+      const testFolderName = "appWithInheritsVariable";
+      const testConfigFileName = "app.config";
+
+      const configEnvironments = ["dev", "local"];
+
+      await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
+    });
+
+    it("Config with env variable", async () => {
+      const testFolderName = "appWithEnvVariable";
+      const testConfigFileName = "app.config";
+
+      const configEnvironments = ["dev", "local"];
+
+      await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
+    });
   });
 
   describe("App", () => {
