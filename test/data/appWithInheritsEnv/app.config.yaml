@@ -1,0 +1,9 @@
+
+default: !!map
+  path: !!str ./file.json
+
+environments: !!map
+  local:
+    path: local/file.json
+  dev:
+    inherits: local

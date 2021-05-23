@@ -1,0 +1,5 @@
+
+default: !!map
+  path: !!str ${env}/file.json # env variable
+
+environments: !!map

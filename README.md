@@ -189,12 +189,12 @@ value into expected configuration properties.
 ```yaml
 default:
 
+  variables:
+    _middlewareurl: !!str "https://default.middleware.test.com"
+    _dcphost: !!str "https://default.api.test.com"
+    _api-path: !!str "/path/to/api"
+
   middlewareapipath: !!str "${_middlewareurl}/mw/api/path"
-
-  _middlewareurl: !!str "https://default.middleware.test.com"
-  _dcphost: !!str "https://default.api.test.com"
-  _api-path: !!str "/path/to/api"
-
   apihost: !!str "http://txnext-gen.com${_api-path}"
 
   dcpendpoints: !!map
@@ -203,12 +203,14 @@ default:
     dcprefund: !!str "${_dcphost}/api/refund"
 
 environments:
-   local:
-   qat:
+  local:
+  qat:
+    variables:
       _dcphost: !!str "https://${env}.api.test.com"
-   prod:
-     _dcphost: !!str "https://dcp.domain.com"
-     apiHost: "https://domain.com/api"
+  prod:
+    variables:
+      _dcphost: !!str "https://dcp.domain.com"
+    apiHost: "https://domain.com/api"
 ```
 
 This will generate 3 separate configuration files :
@@ -272,8 +274,9 @@ The default delimiters are `_` and `_`, thus an _abstract_ environment template 
 
 ```yaml
 default:
-  _dcphost: !!str "https://default.api.test.com"
-  _middlewareurl: !!str "https://default.middleware.test.com"
+  variables:
+    _dcphost: !!str "https://default.api.test.com"
+    _middlewareurl: !!str "https://default.middleware.test.com"
 
   apiHost: !!str "https://domain.com/api"
   middlewareapipath: !!str "${_middlewareurl}/mw/api/path"
@@ -287,7 +290,8 @@ environments:
 
   _basicQaSettings_: !!map
     apiHost: !!str "https://qat.domain.com/api"
-    _dcphost: !!str "https://qat.api.test.com"
+    variables:
+      _dcphost: !!str "https://qat.api.test.com"
 
   qa1: !!map
     inherits: !!str "_basicQaSettings_"
@@ -298,8 +302,9 @@ environments:
 
   uat: !!map
     inherits: !!str "_basicQaSettings_"
-    _middlewareurl: !!str "https://default.middleware.test.com"
-    _dcphost: !!str "https://uat.api.test.com"
+    variables:
+      _middlewareurl: !!str "https://default.middleware.test.com"
+      _dcphost: !!str "https://uat.api.test.com"
 ```
 
 This will hydrate into 3 separate environment configuration files.

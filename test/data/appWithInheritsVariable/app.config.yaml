@@ -1,0 +1,14 @@
+
+default: !!map
+  variables:
+    base: ./base
+    local_base: local/base
+  path: !!str ${base}/file.json
+
+environments: !!map
+  local:
+    path: ${local_base}/file.json
+  dev:
+    variables:
+      dev_base: dev/base
+    path: ${dev_base}/file.json
