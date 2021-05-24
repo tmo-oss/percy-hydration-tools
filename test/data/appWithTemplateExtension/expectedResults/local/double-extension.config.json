@@ -1,0 +1,8 @@
+{
+  "path": "./file.json",
+  "dcpEndpoints": {
+    "dcpCart": "https://default.api.test.com/api/cart",
+    "dcpUpdate": "https://default.api.test.com/api/update",
+    "dcpRefund": "https://default.api.test.com/api/refund"
+  }
+}

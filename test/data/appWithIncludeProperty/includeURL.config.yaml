@@ -1,8 +1,10 @@
 
 include: 
   remote: 'https://gitee.com/ahviplc/ts-axios/raw/master/.travis.yml'
+
 default: !!map
   test_extends:
     extends:
       - notifications
+
 environments: !!map

@@ -691,7 +691,7 @@ function sortEnvByInherits(environments: string[], envNodes: Record<string, unkn
         if (stack.indexOf(inherits) >= 0) {
           stack.push(inherits);
           throw new Error(
-            "Cyclic env inherits detected: " + stack.join(" -> ")
+            "Cyclic environment inheritance detected: " + stack.join(" -> ")
           );
         } else {
           current = inherits;

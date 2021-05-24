@@ -1,0 +1,13 @@
+
+templates: !!map # templates
+  projectDefault: !!map
+    variables: !!map
+      fileType: !!str "json"
+
+    path: !!str "./file.${fileType}"
+
+default: !!map
+  extends:  # extends
+    - projectDefault
+
+environments: !!map

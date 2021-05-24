@@ -2,6 +2,7 @@
 default: !!map
   variables:
     base: ./base
+
   path: !!str ${base}/file.json
 
 environments: !!map

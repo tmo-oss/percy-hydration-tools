@@ -1,8 +1,0 @@
-templates: !!map # templates
-  default: !!map
-    path: !!str ./file.json
-default: !!map
-  extends:  # extends
-    - default
-
-environments: !!map

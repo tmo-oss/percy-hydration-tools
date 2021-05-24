@@ -1,0 +1,25 @@
+
+templates: !!map # templates
+  projectDefault: !!map
+    variables: !!map
+      fileType: !!str "json"
+
+    path: !!str "./file.${fileType}"
+
+  projectDcpEndpoints: !!map
+    variables:
+      _dcphost: !!str "https://default.api.test.com"
+
+    dcpEndpoints: !!map
+      dcpCart: !!str "${_dcphost}/api/cart"
+      dcpUpdate: !!str "${_dcphost}/api/update"
+      dcpRefund: !!str "${_dcphost}/api/refund"
+
+
+
+default: !!map
+  extends:  # extends
+    - projectDefault
+    - projectDcpEndpoints
+
+environments: !!map

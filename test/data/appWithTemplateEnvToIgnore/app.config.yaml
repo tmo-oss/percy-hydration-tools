@@ -1,10 +1,11 @@
+# this test requires the `.percyrc` file to identify the `tpl_` prefix for abstract templates.
 
 default: !!map
   path: !!str ${env}/file.json
 
 environments: !!map
 
-  tpl_basic: !!map    # this is a template for an environment. This must be inherited by an actual environment.
+  tpl_basic: !!map    # this is an abstract template for an environment. This must be inherited by an actual environment.
     path: !!str ${env}/filename.json
 
   dev: !!map

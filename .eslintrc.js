@@ -24,7 +24,7 @@ module.exports = {
         tsconfigRootDir: __dirname
       },
       rules: {
-        "no-trailing-spaces": "error",
+        "no-trailing-spaces": "off",
         "no-constant-condition": "off",
         "@typescript-eslint/quotes": [
           "error",
