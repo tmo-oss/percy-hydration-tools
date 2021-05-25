@@ -21,6 +21,7 @@ software without specific prior written permission.
 ===========================================================================
 */
 
+require('dotenv').config();
 module.exports = {
   LOG_LEVEL: process.env.PERCY_LOG_LEVEL || "info",
   ENVIRONMENT_FILE_NAME:
@@ -33,7 +34,7 @@ module.exports = {
     envIgnorePrefix: process.env.PERCY_DEFAULT_ENV_IGNORE_PREFIX,
     envIgnoreSuffix: process.env.PERCY_DEFAULT_ENV_IGNORE_SUFFIX,
   },
-  GITLAB_ACCESS_TOKEN: process.env.GITLAB_ACCESS_TOKEN,
+  PERSONAL_ACCESS_TOKEN: process.env.PERSONAL_ACCESS_TOKEN,
   COLORIZE_CONSOLE: process.env.PERCY_CONSOLE_COLORS
     ? /(f(?:alse)?|0|off)/gi.test(process.env.PERCY_CONSOLE_COLORS)
       ? false

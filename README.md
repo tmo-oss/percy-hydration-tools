@@ -95,6 +95,7 @@ Main configuration file can be found at `config/default.js`
 | PERCY_DEFAULT_VARIABLE_SUFFIX      | The YAML variable substitute suffix (default value: `}_`)             |
 | PERCY_DEFAULT_VARIABLE_NAME_PREFIX | The YAML variable name prefix (default value: `$`)                    |
 | PERCY_CONSOLE_COLORS               | The flag whether to colorize the console output or not                |
+| PERSONAL_ACCESS_TOKEN              | The personal access token to fetch gitlab or github project file      |
 
 
 ### Local Data runtime config
@@ -442,7 +443,7 @@ environments:
 # Lint code
 $ npm run lint
 
-# Run unit tests with coverage
+# Run unit tests with coverage, you should set PERSONAL_ACCESS_TOKEN to .env file, otherwise the include project test case will fail
 $ npm run test
 ```
 
