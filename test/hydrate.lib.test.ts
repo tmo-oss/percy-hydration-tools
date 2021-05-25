@@ -164,7 +164,7 @@ describe("hydrate:", () => {
             });
 
             // TODO: Fails to load project path from gitlab.  What happens when we move to github for open source?
-            it.skip("include file from gitlab project path", async () => {
+            it("include file from gitlab project path", async () => {
                 const testFolderName = "appWithIncludeProperty";
                 const testConfigFileName = "includeProject.config";
 

@@ -36,6 +36,7 @@ import { ParseError } from "./index";
 import * as config from "config";
 /* eslint-disable @typescript-eslint/no-var-requires */
 const plantuml = require("node-plantuml");
+const gitRemoteOriginUrl = require("git-remote-origin-url");
 
 /**
  * Read and validate YAML config file
@@ -201,14 +202,9 @@ async function loadRemoteYAML(remotePath: string): Promise<Record<string, unknow
  * @returns include object
  */
  async function loadProjectYAML(include: Record<string, string>): Promise<Record<string, unknown>> {
-  const url = `https://gitlab.com/api/v4/projects/${encodeURIComponent(include.project)}/repository/files/${encodeURIComponent(include.file)}/raw?ref=${include.ref || "master"}`;
-  const options: Record<string, unknown> = { responseType: "text" };
-  if (config.has("GITLAB_ACCESS_TOKEN")) {
-    options.headers = {"PRIVATE-TOKEN": config.get("GITLAB_ACCESS_TOKEN")}
-  }
   try {
-    const res = await axios.get(url, options);
-    const includeObject =  yaml.load(res.data) as Record<string, unknown>;
+    const res = await loadRemoteProject(include);
+    const includeObject =  yaml.load(res) as Record<string, unknown>;
     if (includeObject.include) {
       const nestedObject = await loadIncludeTemplate("/", includeObject.include as []| string | Record<string, unknown>);
       _.extend(includeObject, nestedObject);
@@ -217,6 +213,34 @@ async function loadRemoteYAML(remotePath: string): Promise<Record<string, unknow
     return includeObject;
   } catch(e) {
     throw new Error(`get project file ${include.project}.${include.file} error: ${e.message}`);
+  }
+}
+
+/**
+ * Fetch remote content
+ * @param include the project object
+ * @returns remote content
+ */
+async function loadRemoteProject(include: Record<string, string>): Promise<string> {
+  const remoteAddress = await gitRemoteOriginUrl();
+  if (_.includes(remoteAddress, "gitlab")) {
+    const url = `https://gitlab.com/api/v4/projects/${encodeURIComponent(include.project)}/repository/files/${encodeURIComponent(include.file)}/raw?ref=${include.ref || "master"}`;
+    const options: Record<string, unknown> = { responseType: "text" };
+    if (config.has("PERSONAL_ACCESS_TOKEN")) {
+      options.headers = {"PRIVATE-TOKEN": config.get("PERSONAL_ACCESS_TOKEN")}
+    }
+    const res = await axios.get(url, options);
+    return res.data;
+  } else if (_.includes(remoteAddress, "github")) {
+    const url = `https://api.github.com/repos/${include.project}/contents/${include.file}?ref=${include.ref || "master"}`;
+    const options: Record<string, unknown> = { responseType: "text", headers: { Accept: "application/vnd.github.v4.raw" } };
+    if (config.has("PERSONAL_ACCESS_TOKEN")) {
+      (options.headers as Record<string, string>)["Authorization"] = `token ${config.get("PERSONAL_ACCESS_TOKEN")}`
+    }
+    const res = await axios.get(url, options);
+    return res.data;
+  } else {
+    throw new Error("only support gitlab or github project");
   }
 }
 

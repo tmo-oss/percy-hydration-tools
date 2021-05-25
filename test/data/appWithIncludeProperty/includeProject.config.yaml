@@ -3,22 +3,14 @@
 
 include: 
   - project: tmo-poc/hydration-tool
-    file: test/data/apps/shop/toggles.config.yaml
+    file: test/data/appWithIncludeProperty/external.yaml
 
     # TODO: This 'necessarily' references a gitlab path.
     # This perhaps should be dynamically derived from the local project git remote.
 
 
 default: !!map
-  server.url: !!bool true
-  host: !!bool false
-  jwt.enabled: false
   extends:
-    - environments.prod
+    - external.test_extends
 
 environments: !!map
-  prod: !!map
-    jwt.enabled: !!bool true
-  dev: !!map
-    server.url: !!bool true
-    host: !!bool false
