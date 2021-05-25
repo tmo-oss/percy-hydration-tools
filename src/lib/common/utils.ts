@@ -281,7 +281,11 @@ function resolveExtends(
             throw new Error(`the extends value ${val} isn't an object`)
           } else {
             _.each(templateValue as Record<string, unknown>, (v, key) => {
-              result[key] = v;
+              if (_.isPlainObject(v) && _.isPlainObject(result[key])) {
+                _.extend(result[key], v)
+              } else {
+                result[key] = v;
+              }
             });
           }
         })
