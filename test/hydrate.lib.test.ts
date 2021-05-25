@@ -193,8 +193,7 @@ describe("hydrate:", () => {
             await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
         });
 
-        // TODO: hydration fails to merge multiple templates extended into 'default' node.
-        it.skip("Config with double template Extension", async () => {
+        it("Config with double template Extension", async () => {
             const testFolderName = "appWithTemplateExtension";
             const testConfigFileName = "double-extension.config";
 
