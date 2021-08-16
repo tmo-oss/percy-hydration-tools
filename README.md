@@ -1,4 +1,12 @@
-## Percival Hydration and JSON Comparison Command Line Utilities
+# Percival Hydration tools
+
+> *Includes JSON comparison command line utilties*
+
+Percival is a Configuration As Code file format that enables DRY/Normalization of configuration files.  
+This tool suite provides a CLI for hydration and verification of the resulting `wet` files.
+
+Configuration As Code
+
 
 ## Prerequisites
 
