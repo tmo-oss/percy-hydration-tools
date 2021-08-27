@@ -58,7 +58,7 @@ const pumlHydrate = new Hydrate(
     true
 );
 
-async function validateHydratedFile(testName: string, testConfigFileName: string, environments: Array<string>, withPuml: boolean = false) {
+async function validateHydratedFile(testName: string, testConfigFileName: string, environments: Array<string>, withPuml = false) {
 
     const testFolder = `data/${testName}/`;
 
@@ -106,7 +106,7 @@ describe("hydrate:", () => {
             fs.removeSync(outputFolder);
         });
 
-        describe('Should hydrate successfully', () => {
+        describe("Should hydrate successfully", () => {
             it("without puml diagrams", async () => {
                 const testFolderName = "apps/client";
                 const testConfigFileName = "app.config";
