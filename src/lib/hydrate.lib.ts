@@ -40,15 +40,21 @@ export class Hydrate {
   private readonly options: Record<string, unknown> = {};
   private readonly logger: winston.Logger;
   private readonly colorConsole?: boolean = undefined;
+  private readonly generateClassDiagrams?: boolean = false;
 
   /**
    * the constructor.
    * @param options the options.
+   * @param colorConsole boolean: use terminal color codes in console output
+   * @param generateClassDiagrams boolean: use puml to draw config environment inheritance hierarchy using uml class diagrams
    */
-  constructor(options: Record<string, unknown>, colorConsole?: boolean) {
+  constructor(options: Record<string, unknown>,
+              colorConsole?: boolean,
+              generateClassDiagrams?: boolean) {
     this.options = options;
     this.colorConsole = colorConsole;
     this.logger = getLogger(colorConsole);
+    this.generateClassDiagrams = generateClassDiagrams;
   }
 
   /**
@@ -171,8 +177,10 @@ export class Hydrate {
         percyConfig
       );
       if (outputFolder) {
-        await utils.writeResult(result, yamlFilePath, outputFolder, percyConfig);
-        await utils.writeInheritanceTree(appConfig, result, yamlFilePath, outputFolder, percyConfig);
+        await utils.exportJsonConfig(result, yamlFilePath, outputFolder, percyConfig);
+        if (this.generateClassDiagrams) {
+            await utils.exportPumlDiagram(appConfig, result, yamlFilePath, outputFolder, percyConfig);
+        }
       }
       this.logger.info(`Successfully processed ${yamlFilePath}`);
     } catch (e) {

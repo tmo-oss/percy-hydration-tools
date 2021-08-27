@@ -1,0 +1,7 @@
+{
+  "path": "prod/config/file.json",
+  "parent": "./parent.json",
+  "value1": "One",
+  "value2": 2,
+  "value3": true
+}

@@ -42,7 +42,8 @@ const minimistOptions = {
     f: "file",
     o: "out",
     r: "root",
-    l: "linter"
+    l: "linter",
+    p: "puml"
   },
   boolean: ["root", "app", "file", "linter"],
   default: {
@@ -50,7 +51,8 @@ const minimistOptions = {
     colorConsole: undefined,
     file: false,
     root: false,
-    linter: false
+    linter: false,
+    puml: false
   },
   string: ["out", "colorConsole"]
 };
@@ -99,7 +101,8 @@ async function main() {
         LOG_LEVEL: config.get("LOG_LEVEL"),
         PERCY_CONFIG_FILE_NAME: config.get("PERCY_CONFIG_FILE_NAME"),
       },
-      colorConsole
+      colorConsole,
+      options.puml
     );
 
     options.path = path.resolve(options.path);
@@ -110,10 +113,15 @@ async function main() {
     }
 
     if (options.root) {
+
       await hydrate.hydrateAllApps(options.path, options.out);
+
     } else if (options.app) {
+
       await hydrate.hydrateApp(options.path, undefined, options.out);
+
     } else if (options.file) {
+
       await hydrate.hydrateFile(
         options.path,
         undefined,

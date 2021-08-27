@@ -1,0 +1,7 @@
+{
+  "path": "qat/config/file.json",
+  "parent": "qat/config/parent.json",
+  "value1": "One",
+  "value2": 15,
+  "value3": true
+}

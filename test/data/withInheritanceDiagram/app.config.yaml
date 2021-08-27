@@ -1,0 +1,33 @@
+
+default:
+  variables:
+    base: ${env}/config
+
+  path: ${base}/file.json
+
+  parent: ./parent.json
+  value1: "One"
+  value2: 2
+  value3: true
+
+environments:
+  local:
+    #inherits: default
+    parent: "${env}/config/parent.json"
+
+  dev:
+    #inherits: default
+    variables:
+      base: "../config"
+    value1: "Five"
+
+  qat:
+    inherits: local
+    value2: 15
+
+  stg:
+    inherits: dev
+    value3: false
+
+  #prod:
+    #inherits: default

@@ -43,11 +43,22 @@ const hydrate = new Hydrate(
         LOG_LEVEL: config.get("LOG_LEVEL"),
         PERCY_CONFIG_FILE_NAME: config.get("PERCY_CONFIG_FILE_NAME"),
     },
+    true,
+    false
+);
+
+const pumlHydrate = new Hydrate(
+    {
+        DEFAULT_PERCY_CONFIG: config.get("DEFAULT_PERCY_CONFIG"),
+        ENVIRONMENT_FILE_NAME: config.get("ENVIRONMENT_FILE_NAME"),
+        LOG_LEVEL: config.get("LOG_LEVEL"),
+        PERCY_CONFIG_FILE_NAME: config.get("PERCY_CONFIG_FILE_NAME"),
+    },
+    true,
     true
 );
 
-
-async function validateConfigFile(testName: string, testConfigFileName: string, environments: Array<string>) {
+async function validateHydratedFile(testName: string, testConfigFileName: string, environments: Array<string>, withPuml: boolean = false) {
 
     const testFolder = `data/${testName}/`;
 
@@ -59,8 +70,11 @@ async function validateConfigFile(testName: string, testConfigFileName: string, 
         `/${testName}`
     );
 
+    const myHydrator = withPuml ? pumlHydrate : hydrate;
+
     await assert.becomes(
-        hydrate.hydrateFile(inputFile, undefined, undefined, outputFile), undefined);
+        myHydrator.hydrateFile(inputFile, undefined, undefined, outputFile),
+        undefined);
 
     await assert.becomes(utils.findSubFolders(outputFile), environments);
 
@@ -92,12 +106,32 @@ describe("hydrate:", () => {
             fs.removeSync(outputFolder);
         });
 
-        it("Should hydrate successfully", async () => {
-            const testFolderName = "apps/client";
-            const testConfigFileName = "app.config";
+        describe('Should hydrate successfully', () => {
+            it("without puml diagrams", async () => {
+                const testFolderName = "apps/client";
+                const testConfigFileName = "app.config";
 
-            const configEnvironments = ["dev", "local", "prod", "qat"];
-            await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
+                const configEnvironments = ["dev", "local", "prod", "qat"];
+                await validateHydratedFile(testFolderName, testConfigFileName, configEnvironments);
+
+                const pumlFilePath = path.join(outputFolder, testFolderName, `${testConfigFileName}.puml.png`);
+
+                await assert.becomes(fs.pathExists(pumlFilePath), false);
+
+            });
+
+            it("with puml diagrams", async () => {
+                const testFolderName = "withInheritanceDiagram";
+                const testConfigFileName = "app.config";
+                const configEnvironments = ["dev", "local", "prod", "qat", "stg"]; // must be in alpha order
+
+                await validateHydratedFile(testFolderName, testConfigFileName, configEnvironments, true);
+
+                const pumlFilePath = path.join(outputFolder, testFolderName, `${testConfigFileName}.puml.png`);
+
+                await assert.becomes(fs.pathExists(pumlFilePath), true);
+
+            });
         });
 
         it("Should dry-run hydrate successfully ", async () => {
@@ -120,7 +154,7 @@ describe("hydrate:", () => {
             const testConfigFileName = "app.config";
             const configEnvironments = ["dev", "local", "prod", "qat"];
 
-            await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
+            await validateHydratedFile(testFolderName, testConfigFileName, configEnvironments);
         });
 
         it("With template environment to Ignore", async () => {
@@ -130,7 +164,7 @@ describe("hydrate:", () => {
 
             const configEnvironments = ["dev", "local"];
 
-            await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
+            await validateHydratedFile(testFolderName, testConfigFileName, configEnvironments);
 
         });
 
@@ -140,7 +174,7 @@ describe("hydrate:", () => {
 
             const configEnvironments = ["dev", "local", "prod", "qat"];
 
-            await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
+            await validateHydratedFile(testFolderName, testConfigFileName, configEnvironments);
         });
 
         describe("including external files", () => {
@@ -151,7 +185,7 @@ describe("hydrate:", () => {
 
                 const configEnvironments = ["dev", "local", "prod", "qat"];
 
-                await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
+                await validateHydratedFile(testFolderName, testConfigFileName, configEnvironments);
             });
 
             it("include local file", async () => {
@@ -160,7 +194,7 @@ describe("hydrate:", () => {
 
                 const configEnvironments = ["dev", "local", "prod", "qat"];
 
-                await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
+                await validateHydratedFile(testFolderName, testConfigFileName, configEnvironments);
             });
 
             // TODO: Fails to load project path from gitlab.  What happens when we move to github for open source?
@@ -170,7 +204,7 @@ describe("hydrate:", () => {
 
                 const configEnvironments = ["dev", "local", "prod", "qat"];
 
-                await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
+                await validateHydratedFile(testFolderName, testConfigFileName, configEnvironments);
             });
 
             it("include property from url", async () => {
@@ -179,7 +213,7 @@ describe("hydrate:", () => {
 
                 const configEnvironments = ["dev", "local", "prod", "qat"];
 
-                await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
+                await validateHydratedFile(testFolderName, testConfigFileName, configEnvironments);
             });
 
         });
@@ -190,7 +224,7 @@ describe("hydrate:", () => {
 
             const configEnvironments = ["local"];
 
-            await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
+            await validateHydratedFile(testFolderName, testConfigFileName, configEnvironments);
         });
 
         it("Config with double template Extension", async () => {
@@ -199,7 +233,7 @@ describe("hydrate:", () => {
 
             const configEnvironments = ["local"];
 
-            await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
+            await validateHydratedFile(testFolderName, testConfigFileName, configEnvironments);
         });
 
         it("Config with inherits env", async () => {
@@ -208,7 +242,7 @@ describe("hydrate:", () => {
 
             const configEnvironments = ["dev", "local"];
 
-            await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
+            await validateHydratedFile(testFolderName, testConfigFileName, configEnvironments);
         });
 
         it("Config with variable", async () => {
@@ -217,7 +251,7 @@ describe("hydrate:", () => {
 
             const configEnvironments = ["dev", "local"];
 
-            await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
+            await validateHydratedFile(testFolderName, testConfigFileName, configEnvironments);
         });
 
         it("Config with inherits variable", async () => {
@@ -226,7 +260,7 @@ describe("hydrate:", () => {
 
             const configEnvironments = ["dev", "local"];
 
-            await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
+            await validateHydratedFile(testFolderName, testConfigFileName, configEnvironments);
         });
 
         it("Config with env variable", async () => {
@@ -235,7 +269,7 @@ describe("hydrate:", () => {
 
             const configEnvironments = ["dev", "local"];
 
-            await validateConfigFile(testFolderName, testConfigFileName, configEnvironments);
+            await validateHydratedFile(testFolderName, testConfigFileName, configEnvironments);
         });
     });
 
@@ -297,7 +331,7 @@ describe("hydrate:", () => {
                 } catch (e) {
                     const regExp = /requires property "default"/;
                     expect(e.messages[0]).toMatch(regExp);
-                    console.info(chalk.bold("appWithInvalidConfig/") + chalk.green("missing.default.node.yaml"),chalk.red(" expected error message above"));
+                    console.info(chalk.bold("appWithInvalidConfig/") + chalk.green("missing.default.node.yaml"), chalk.red(" expected error message above"));
 
                 }
             });
@@ -313,7 +347,7 @@ describe("hydrate:", () => {
                     assert.fail("should throw error");
                 } catch (e) {
                     expect(e.messages[0]).toMatch(/requires property "environments"/);
-                    console.info(chalk.bold("appWithInvalidConfig/") + chalk.green("missing.environments.node.yaml"),chalk.red(" expected error message above"));
+                    console.info(chalk.bold("appWithInvalidConfig/") + chalk.green("missing.environments.node.yaml"), chalk.red(" expected error message above"));
                 }
             });
 
@@ -333,7 +367,7 @@ describe("hydrate:", () => {
                     expect(e.messages[0]).toEqual(
                         "env.qat: Type is different from default node for property server.host in this node"
                     );
-                    console.info(chalk.bold("appWithInvalidConfig/") + chalk.green("inconsistent.type.property.yaml"),chalk.red(" expected error message above"));
+                    console.info(chalk.bold("appWithInvalidConfig/") + chalk.green("inconsistent.type.property.yaml"), chalk.red(" expected error message above"));
                 }
             });
 
@@ -348,7 +382,7 @@ describe("hydrate:", () => {
                     assert.fail("should throw error");
                 } catch (e) {
                     expect(e.messages[0]).toEqual("env.local: Cannot resolve variables for: undefined_variable");
-                    console.info(chalk.bold("appWithInvalidConfig/") + chalk.green("undefined.variable.yaml"),chalk.red(" expected error message above"));
+                    console.info(chalk.bold("appWithInvalidConfig/") + chalk.green("undefined.variable.yaml"), chalk.red(" expected error message above"));
                 }
             });
 
@@ -363,7 +397,7 @@ describe("hydrate:", () => {
                     assert.fail("should throw error");
                 } catch (e) {
                     expect(e.messages[0]).toEqual("env.dev: Cannot find property undefinedProperty in this node");
-                    console.info(chalk.bold("appWithInvalidConfig/") + chalk.green("undefined.property.yaml"),chalk.red(" expected error message above"));
+                    console.info(chalk.bold("appWithInvalidConfig/") + chalk.green("undefined.property.yaml"), chalk.red(" expected error message above"));
                 }
             });
 
@@ -379,7 +413,7 @@ describe("hydrate:", () => {
                     assert.fail("should throw error");
                 } catch (e) {
                     expect(e.messages[0]).toMatch(/Cyclic environment inheritance detected/);
-                    console.info(chalk.bold("appWithInvalidConfig/") + chalk.green("cyclic.env.inherits.yaml"),":",chalk.red(" expected error message above"));
+                    console.info(chalk.bold("appWithInvalidConfig/") + chalk.green("cyclic.env.inherits.yaml"), ":", chalk.red(" expected error message above"));
                 }
             });
 
@@ -397,7 +431,7 @@ describe("hydrate:", () => {
                     assert.fail("should throw error");
                 } catch (e) {
                     expect(e.messages[0]).toMatch(/Cyclic variable reference detected/);
-                    console.info(chalk.bold("appWithInvalidConfig/") + chalk.green("cyclic.token.reference.yaml"),chalk.red(" expected error message above"));
+                    console.info(chalk.bold("appWithInvalidConfig/") + chalk.green("cyclic.token.reference.yaml"), chalk.red(" expected error message above"));
                 }
             });
 
@@ -415,7 +449,7 @@ describe("hydrate:", () => {
                     assert.fail("should throw error");
                 } catch (e) {
                     expect(e.messages[0]).toMatch(/Loop variable reference/);
-                    console.info(chalk.bold("appWithInvalidConfig/") + chalk.green("self-reference.yaml"),chalk.red(" expected error message above"));
+                    console.info(chalk.bold("appWithInvalidConfig/") + chalk.green("self-reference.yaml"), chalk.red(" expected error message above"));
                 }
             });
         });
